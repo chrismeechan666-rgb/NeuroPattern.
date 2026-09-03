@@ -30,10 +30,10 @@ protected void onCreate(Bundle savedInstanceState) {
     setContentView(webView);
     webView.loadUrl("file:///android_asset/index.html");
 }, 1500);
+}
 
-
-    @Override
-    public void onBackPressed() {
+@Override
+public void onBackPressed() {
         if (webView.canGoBack()) {
             webView.goBack();
         } else {
