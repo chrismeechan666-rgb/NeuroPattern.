@@ -11,21 +11,25 @@ public class MainActivity extends Activity {
     private WebView webView;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+protected void onCreate(Bundle savedInstanceState) {
+    setTheme(R.style.SplashTheme);
+    super.onCreate(savedInstanceState);
 
-        webView = new WebView(this);
+    webView = new WebView(this);
 
-        WebSettings settings = webView.getSettings();
-        settings.setJavaScriptEnabled(true);
-        settings.setDomStorageEnabled(true);
+    WebSettings settings = webView.getSettings();
+    settings.setJavaScriptEnabled(true);
+    settings.setDomStorageEnabled(true);
 
-        webView.setWebViewClient(new WebViewClient());
+    webView.setWebViewClient(new WebViewClient());
 
-        setContentView(webView);
+    setContentView(webView);
 
+    webView.postDelayed(() -> {
+        setTheme(R.style.AppTheme);
         webView.loadUrl("file:///android_asset/index.html");
-    }
+    }, 1500);
+}
 
     @Override
     public void onBackPressed() {
