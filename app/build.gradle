@@ -10,8 +10,8 @@ android {
         applicationId "com.neuropattern.app"
         minSdk 23
         targetSdk 35
-        versionCode 3
-        versionName "3.0.0"
+        versionCode 10
+versionName "10.0.0"
     }
 }
 
