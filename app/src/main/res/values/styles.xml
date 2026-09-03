@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+    <style name="SplashTheme" parent="android:style/Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@drawable/splash_background</item>
+        <item name="android:windowFullscreen">true</item>
+    </style>
+
+    <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
         <item name="android:colorAccent">#2563EB</item>
     </style>
 
