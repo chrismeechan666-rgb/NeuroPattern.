@@ -23,13 +23,14 @@ protected void onCreate(Bundle savedInstanceState) {
 
     webView.setWebViewClient(new WebViewClient());
 
-    setContentView(webView);
+    
 
     webView.postDelayed(() -> {
-        setTheme(R.style.AppTheme);
-        webView.loadUrl("file:///android_asset/index.html");
-    }, 1500);
-}
+    setTheme(R.style.AppTheme);
+    setContentView(webView);
+    webView.loadUrl("file:///android_asset/index.html");
+}, 1500);
+
 
     @Override
     public void onBackPressed() {
