@@ -25,7 +25,7 @@ protected void onCreate(Bundle savedInstanceState) {
 
     
 
-    webView.postDelayed(() -> {
+    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
     setTheme(R.style.AppTheme);
     setContentView(webView);
     webView.loadUrl("file:///android_asset/index.html");
