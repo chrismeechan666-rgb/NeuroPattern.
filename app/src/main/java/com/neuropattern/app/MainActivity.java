@@ -29,7 +29,7 @@ protected void onCreate(Bundle savedInstanceState) {
     setTheme(R.style.AppTheme);
     setContentView(webView);
     webView.loadUrl("file:///android_asset/index.html");
-}, 1500);
+}, 250);
 }
 
 @Override
