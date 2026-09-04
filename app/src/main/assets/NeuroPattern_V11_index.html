@@ -1,0 +1,649 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>NeuroPattern</title>
+<style>
+:root{
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --bg:#f3f7f7;--card:#fff;--ink:#173f44;--muted:#6d8387;--line:#dce7e8;
+  --teal:#176b68;--teal2:#dcefeb;--red:#a84444;--amber:#a66b14;--green:#2c7a56;
+}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink)}
+.top{background:var(--card);padding:17px 18px 13px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+.brandrow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{font-size:27px;font-weight:900;letter-spacing:-.6px}.tag{font-size:12px;color:var(--muted);margin-top:2px}
+.activeBadge{font-size:12px;padding:7px 10px;border-radius:999px;background:var(--teal2);color:var(--teal);font-weight:800;max-width:42%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabs{display:flex;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:76px;z-index:9}
+.tabs button{border:0;background:var(--card);padding:12px 13px;color:var(--muted);white-space:nowrap;font-weight:700}
+.tabs button.on{color:var(--teal);border-bottom:3px solid var(--teal)}
+.page{padding:17px 17px 92px}.h1{font-size:24px;font-weight:900;margin:0 0 6px}.h2{font-size:16px;font-weight:850;margin:18px 0 7px}
+.p{font-size:14px;line-height:1.48;color:#4f666a}.muted{font-size:12px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:14px;margin-top:11px;box-shadow:0 1px 2px rgba(0,0,0,.02)}
+.notice{background:#eef5f5}.danger{border-left:4px solid var(--red)}.warn{border-left:4px solid var(--amber)}.good{border-left:4px solid var(--green)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{padding:13px}.big{font-size:23px;font-weight:900}.small{font-size:11px;color:var(--muted)}
+.btn{width:100%;padding:13px 14px;border-radius:13px;border:0;font-weight:850;margin-top:9px;font-size:14px}
+.primary{background:var(--teal);color:white}.secondary{background:white;color:var(--teal);border:1px solid #c9dada}.dangerBtn{background:#fff;color:var(--red);border:1px solid #e4caca}
+.quickState{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}.quickState button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 4px;font-size:11px;color:var(--ink);font-weight:750}
+.quickState button b{display:block;font-size:19px;margin-bottom:2px}.quickState button[data-level="4"]{border-color:#e2bcbc}
+.field{margin-top:13px}.label{font-size:13px;font-weight:850;margin-bottom:7px}
+.inp,select,textarea{width:100%;padding:11px;border:1px solid #d4e0e1;border-radius:11px;background:#fff;color:var(--ink);font:inherit}
+textarea{min-height:78px;resize:vertical}.row{display:flex;gap:7px;flex-wrap:wrap}
+.chip{padding:8px 10px;border-radius:999px;border:1px solid #cbdadb;background:#fff;color:#50666a;font-size:12px}
+.chip.on{background:var(--teal2);border-color:var(--teal);color:#155b58;font-weight:850}
+.event{position:relative;padding-left:16px}.event:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--teal);border-radius:4px}
+.event.red:before{background:var(--red)}.event.amber:before{background:var(--amber)}
+.eventHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.eventTitle{font-weight:850}
+.profile{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.heat{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}.heatCell{padding:8px 3px;border-radius:8px;background:#e4eeee;text-align:center;font-size:10px}
+.heatCell b{font-size:13px}.barrow{display:grid;grid-template-columns:1.4fr 3fr 32px;gap:7px;align-items:center;margin:7px 0;font-size:12px}.bar{height:9px;background:#e5eeee;border-radius:9px;overflow:hidden}.bar span{display:block;height:100%;background:var(--teal)}
+.navadd{position:fixed;right:17px;bottom:17px;width:58px;height:58px;border-radius:50%;border:0;background:var(--teal);color:#fff;font-size:31px;box-shadow:0 6px 18px #0003;z-index:20}
+.sep{height:1px;background:var(--line);margin:12px 0}.pill{font-size:11px;border-radius:999px;padding:4px 8px;background:#edf3f3;color:#5b7276;display:inline-block}
+.empty{text-align:center;padding:22px 10px;color:var(--muted)}.right{text-align:right}
+.range{display:flex;gap:7px;margin:10px 0 2px}.range button{flex:1;border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 5px;font-weight:800;color:var(--muted)}.range button.on{background:var(--teal2);border-color:var(--teal);color:var(--teal)}
+.chart{height:190px;display:flex;align-items:flex-end;gap:4px;padding:10px 4px 25px;border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+.col{flex:1;min-width:5px;position:relative;height:100%;display:flex;align-items:flex-end;justify-content:center}.col span{display:block;width:80%;min-height:2px;background:var(--teal);border-radius:5px 5px 1px 1px}.col i{position:absolute;bottom:-20px;font-style:normal;font-size:9px;color:var(--muted);white-space:nowrap}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:9px;font-size:11px;color:var(--muted)}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--teal);margin-right:4px}.dot.med{background:var(--amber)}.dot.high{background:var(--red)}
+.timelineChart{position:relative;height:150px;border:1px solid var(--line);border-radius:12px;background:#fbfdfd;margin-top:10px;overflow:hidden}.axisline{position:absolute;left:0;right:0;height:1px;background:#e7eeee}.eventdot{position:absolute;width:10px;height:10px;border-radius:50%;transform:translate(-50%,50%);background:var(--teal)}.eventdot.high{background:var(--red);width:13px;height:13px}.medmark{position:absolute;top:8px;bottom:8px;width:2px;background:var(--amber);opacity:.75}.axislabel{position:absolute;bottom:2px;font-size:9px;color:var(--muted);transform:translateX(-50%)}
+.insightStrong{font-weight:850;color:var(--ink)}.score{display:inline-block;border-radius:999px;background:var(--teal2);color:var(--teal);font-weight:900;padding:4px 8px;font-size:11px}
+
+@media(max-width:420px){.brand{font-size:25px}.tabs{top:74px}.page{padding-left:14px;padding-right:14px}.quickState{gap:4px}.quickState button{font-size:10px;padding:8px 2px}}
+</style>
+
+<style id="v8-polish">
+:root{--calm:#2e8b72;--unsettled:#c7a32a;--agitated:#df7b2d;--high:#d94b45;--aggressive:#9f2f3d;--surface:#fff;--surface2:#f5f8f8}
+body.dark{--ink:#f2f6f6;--muted:#aab8b8;--line:#334343;--surface:#172020;--surface2:#101717;--teal2:#193a36;background:#101717;color:var(--ink)}
+body.dark .card,body.dark input,body.dark textarea,body.dark select,body.dark .range button,body.dark .timelineChart{background:var(--surface);color:var(--ink);border-color:var(--line)}
+body.dark .range button.on{background:var(--teal2)}
+.v8top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.personBadge{display:inline-flex;align-items:center;gap:6px;background:var(--teal2);color:var(--teal);border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900}.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:12px;min-width:44px;min-height:44px;font-size:19px}
+.statusGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}.statusGrid button{border:0;border-radius:15px;min-height:70px;padding:10px;color:white;text-align:left;box-shadow:0 3px 10px rgba(0,0,0,.08)}.statusGrid button:last-child{grid-column:1/-1}.statusGrid b{display:block;font-size:17px}.statusGrid small{opacity:.9}.s0{background:var(--calm)}.s1{background:var(--unsettled)}.s2{background:var(--agitated)}.s3{background:var(--high)}.s4{background:var(--aggressive)}
+.quickActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.quickActions button{min-height:50px;border:1px solid var(--line);border-radius:13px;background:var(--surface);font-weight:850;color:var(--ink)}
+.patternHero{border-radius:16px;padding:14px;background:linear-gradient(135deg,var(--teal2),var(--surface));border:1px solid var(--line);margin:12px 0}.patternHero .eyebrow{text-transform:uppercase;letter-spacing:.08em;font-size:10px;font-weight:900;color:var(--teal)}.patternHero strong{display:block;font-size:17px;margin-top:4px}
+.timelineLevel{display:inline-block;border-radius:999px;padding:3px 7px;color:#fff;font-size:10px;font-weight:900}.tl0{background:var(--calm)}.tl1{background:var(--unsettled)}.tl2{background:var(--agitated)}.tl3{background:var(--high)}.tl4{background:var(--aggressive)}
+.stickyQuick{position:sticky;bottom:8px;z-index:8;display:flex;gap:8px;margin-top:14px;padding:7px;border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(8px)}.stickyQuick button{flex:1;min-height:48px;border:0;border-radius:12px;font-weight:900}.primary{background:var(--teal);color:#fff}.secondary{background:var(--surface2);color:var(--ink)}
+.medType{font-size:10px;font-weight:900;border-radius:999px;padding:3px 7px;background:var(--teal2);color:var(--teal)}.lastGiven{font-size:11px;color:var(--muted);margin-top:4px}
+.undoToast{position:fixed;left:12px;right:12px;bottom:76px;z-index:99;background:#172020;color:#fff;border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 8px 25px rgba(0,0,0,.25)}.undoToast button{border:0;border-radius:9px;padding:7px 10px;font-weight:900}
+@media(min-width:600px){.statusGrid{grid-template-columns:repeat(5,1fr)}.statusGrid button:last-child{grid-column:auto}}
+</style>
+
+
+<style id="v9-professional">
+.staffbar{display:flex;gap:8px;align-items:center;margin:8px 0 12px}.staffbar input{max-width:120px}.auditrow{border-left:3px solid var(--line);padding:8px 10px;margin:7px 0;background:var(--surface);border-radius:0 10px 10px 0}.auditrow b{font-size:12px}.auditrow .muted{font-size:10px}.releaseBanner{border:1px solid #d7b15d;background:#fff8df;border-radius:14px;padding:12px;margin:10px 0;color:#5e4a12}.dark .releaseBanner{background:#2b2818;color:#f3dda2;border-color:#6f6030}.reportGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.reportGrid .card{text-align:center}.reportGrid .big{font-size:25px;font-weight:900}.tiny{font-size:10px;color:var(--muted)}.prnFollow{border:1px dashed var(--amber);border-radius:12px;padding:10px;margin-top:8px}.seg{display:flex;gap:6px;flex-wrap:wrap}.seg button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px;font-weight:800}.seg button.on{background:var(--teal2);color:var(--teal);border-color:var(--teal)}.warnText{font-size:11px;line-height:1.45;color:var(--muted)}
+</style>
+
+
+<style id="v10-release">
+.brandSplash{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px 18px 18px}
+.brandMark{width:82px;height:82px;border-radius:24px;background:linear-gradient(145deg,var(--teal),#2f7068);display:grid;place-items:center;color:#fff;font-size:38px;font-weight:900;box-shadow:0 10px 28px rgba(0,0,0,.15)}
+.brandName{font-size:30px;font-weight:950;letter-spacing:-.03em;margin-top:14px}.brandTag{color:var(--muted);margin-top:4px}
+.onboardStep{margin:14px 0}.onboardStep h3{margin:0 0 5px;font-size:17px}.onboardStep p{margin:0;color:var(--muted);line-height:1.45}
+.releasePill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:var(--teal2);color:var(--teal);font-size:11px;font-weight:900;padding:5px 9px}
+.settingsGroup{margin:14px 0}.settingsGroup h3{font-size:15px;margin:0 0 8px}.settingsRow{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding:11px 0}.settingsRow:last-child{border-bottom:0}.settingsRow .copy{flex:1}.settingsRow .copy b{display:block;font-size:13px}.settingsRow .copy small{display:block;color:var(--muted);margin-top:2px}
+.switch{position:relative;width:48px;height:28px;border-radius:999px;background:#aeb9b9;border:0}.switch.on{background:var(--teal)}.switch:after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.15s}.switch.on:after{left:23px}
+.lockScreen{position:fixed;inset:0;z-index:9999;background:var(--surface2);display:flex;align-items:center;justify-content:center;padding:20px}.lockCard{width:min(420px,100%);background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 16px 40px rgba(0,0,0,.18);text-align:center}.pinDots{font-size:28px;letter-spacing:8px;margin:8px 0 14px}.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.keypad button{min-height:56px;border:1px solid var(--line);border-radius:14px;background:var(--surface2);font-size:20px;font-weight:900;color:var(--ink)}
+.demoBanner{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#eef4ff;border:1px solid #bfd0f0;color:#26466d;border-radius:14px;padding:10px 12px;margin:8px 0}.dark .demoBanner{background:#182639;color:#cfe0ff;border-color:#395574}
+.dangerZone{border:1px solid #e4b0b0;background:#fff4f4;border-radius:14px;padding:12px;margin-top:12px}.dark .dangerZone{background:#2f1b1b;border-color:#6b3434}.dangerBtn{background:#b73737;color:#fff;border:0;border-radius:12px;padding:11px 13px;font-weight:900}
+.aboutGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.aboutGrid .card{text-align:center}.aboutGrid b{display:block;font-size:18px}
+.firstRunOverlay{position:fixed;inset:0;z-index:10000;background:var(--surface2);overflow:auto;padding:18px}.firstRunWrap{max-width:560px;margin:0 auto}
+.noticeStrong{font-weight:850;line-height:1.45}
+</style>
+
+
+<style id="v11-staff-tracking">
+.page{animation:pageIn .18s ease both}
+@keyframes pageIn{from{opacity:.25;transform:translateY(4px)}to{opacity:1;transform:none}}
+.v11Splash{position:fixed;inset:0;z-index:12000;background:linear-gradient(160deg,#08191c,#0d3237 55%,#0f4d52);display:grid;place-items:center;color:#fff;transition:opacity .35s ease,visibility .35s ease}
+.v11Splash.out{opacity:0;visibility:hidden}.neuroAnim{position:relative;width:180px;height:180px}.neuroCore{position:absolute;inset:48px;border:2px solid #89e1d7;border-radius:32px;display:grid;place-items:center;font-size:48px;font-weight:950;box-shadow:0 0 35px #38b8aa55;animation:corePulse 1.2s ease-in-out infinite}.node{position:absolute;width:13px;height:13px;border-radius:50%;background:#8ce8dd;box-shadow:0 0 13px #6ce6d7}.node:after{content:"";position:absolute;height:2px;width:60px;background:linear-gradient(90deg,#8ce8dd99,transparent);transform-origin:left center}.n1{left:14px;top:30px}.n1:after{transform:rotate(28deg)}.n2{right:11px;top:27px}.n2:after{transform:rotate(150deg)}.n3{left:4px;bottom:42px}.n3:after{transform:rotate(-22deg)}.n4{right:3px;bottom:37px}.n4:after{transform:rotate(202deg)}.n5{left:82px;top:2px}.n5:after{transform:rotate(88deg);width:45px}.n6{left:84px;bottom:0}.n6:after{transform:rotate(-90deg);width:43px}.node{animation:nodePulse 1.15s ease-in-out infinite}.n2,.n4,.n6{animation-delay:.28s}
+.splashWords{text-align:center;margin-top:14px}.splashWords b{display:block;font-size:27px;letter-spacing:-.04em}.splashWords span{font-size:11px;opacity:.78;letter-spacing:.08em;text-transform:uppercase}
+@keyframes corePulse{50%{transform:scale(1.04);box-shadow:0 0 48px #38b8aa88}}@keyframes nodePulse{50%{transform:scale(1.35);opacity:.68}}
+.loginOverlay{position:fixed;inset:0;z-index:11000;background:var(--surface2);display:flex;align-items:center;justify-content:center;padding:18px}.loginPanel{width:min(440px,100%);background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:20px;box-shadow:0 18px 50px #0003}.loginBrand{display:flex;align-items:center;gap:12px;margin-bottom:16px}.loginLogo{width:48px;height:48px;border-radius:15px;background:var(--teal);color:#fff;display:grid;place-items:center;font-size:24px;font-weight:950}.loginPanel h2{margin:0;font-size:22px}.userChoice{display:flex;gap:10px;align-items:center;width:100%;border:1px solid var(--line);border-radius:14px;background:var(--surface2);padding:11px;margin:7px 0;text-align:left;color:var(--ink)}.avatar{width:38px;height:38px;border-radius:12px;background:var(--teal2);display:grid;place-items:center;color:var(--teal);font-weight:950}.roleTag{font-size:10px;border-radius:999px;padding:3px 7px;background:var(--teal2);color:var(--teal);font-weight:900}.sessionBar{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.sessionBar .mini{width:auto}.quickToast{position:fixed;left:12px;right:12px;bottom:82px;z-index:100;background:#102326;color:#fff;border-radius:15px;padding:12px 13px;display:flex;gap:10px;align-items:center;box-shadow:0 12px 28px #0004}.quickToast .grow{flex:1}.quickToast button{border:0;border-radius:9px;padding:8px 9px;font-weight:900}.quickToast .details{background:#d9efeb;color:#155b58}.quickToast .undo{background:#ffffff1f;color:#fff}
+.todayStrip{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}.todayStrip .card{margin:0}.todayStrip b{font-size:16px}.fabLabel{position:fixed;right:84px;bottom:26px;background:#102326;color:#fff;border-radius:999px;padding:7px 10px;font-size:11px;font-weight:850;z-index:19;opacity:.92}
+.userAdmin{border:1px solid var(--line);border-radius:14px;padding:10px;margin:8px 0}.userAdminHead{display:flex;align-items:center;justify-content:space-between;gap:8px}.tinyBtn{border:1px solid var(--line);background:var(--surface2);color:var(--ink);padding:7px 9px;border-radius:9px;font-weight:800}
+.motionOff *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+</style>
+
+</head>
+<body>
+<div id="v11Splash" class="v11Splash"><div><div class="neuroAnim"><div class="node n1"></div><div class="node n2"></div><div class="node n3"></div><div class="node n4"></div><div class="node n5"></div><div class="node n6"></div><div class="neuroCore">N</div></div><div class="splashWords"><b>NeuroPattern</b><span>connecting the record</span></div></div></div>
+<header class="top"><div class="brandrow"><div><div class="brand">NeuroPattern</div><div class="tag">ABI behaviour • medication • pattern tracker</div></div><div id="activeBadge" class="activeBadge">Person 1</div></div></header>
+<nav id="tabs" class="tabs"></nav>
+<main id="app"></main>
+<div class="fabLabel">Quick log</div><button id="quickAdd" class="navadd">+</button>
+<script>
+(function(){
+"use strict";
+var KEY="neuropattern-v6";
+var APP_VERSION="11.0";
+var OLD_KEYS=["neuropattern-v5","neuropattern-v4","neuropattern-v3"];
+var defaults={people:[{id:"p1",name:"Person 1",baseline:"",communication:"",riskNotes:""}],active:"p1",logs:[],meds:[],medLogs:[],handovers:[],settings:{showSafety:true}};
+function clone(x){return JSON.parse(JSON.stringify(x));}
+function loadState(){
+  var d=null, raw=null;
+  try{
+    raw=localStorage.getItem(KEY);
+    if(!raw){for(var i=0;i<OLD_KEYS.length&&!raw;i++)raw=localStorage.getItem(OLD_KEYS[i]);}
+    if(raw)d=JSON.parse(raw);
+  }catch(e){d=null;}
+  if(!d||typeof d!=="object")d=clone(defaults);
+  if(!Array.isArray(d.people)||!d.people.length)d.people=clone(defaults.people);
+  ["logs","meds","medLogs","handovers","audit","users"].forEach(function(k){if(!Array.isArray(d[k]))d[k]=[];});
+  if(!d.settings)d.settings={showSafety:true};if(!d.settings.staffInitials)d.settings.staffInitials="";if(!d.settings.reportDays)d.settings.reportDays=7;if(typeof d.settings.onboarded==="undefined")d.settings.onboarded=false;if(typeof d.settings.demoMode==="undefined")d.settings.demoMode=false;if(typeof d.settings.pinEnabled==="undefined")d.settings.pinEnabled=false;if(!d.settings.pinHash)d.settings.pinHash="";if(!d.settings.autoLockMinutes)d.settings.autoLockMinutes=5;if(!d.settings.lastActive)d.settings.lastActive=Date.now();if(typeof d.settings.reducedMotion==="undefined")d.settings.reducedMotion=false;if(!d.sessionUserId)d.sessionUserId="";
+  if(!d.active||!d.people.some(function(p){return p&&p.id===d.active;}))d.active=d.people[0].id;
+  return d;
+}
+var state=loadState(), current="home", draftLevel=null, patternDays=7, reportDays=Number((state.settings&&state.settings.reportDays)||7), editingId=null, quickLastId=null;
+var tabDefs=[["home","Home"],["log","Log"],["timeline","Timeline"],["patterns","Patterns"],["meds","Meds"],["people","People"],["reports","Reports"],["settings","Settings"]];
+var behaviours=["Pacing","Repetitive questioning","Raised voice","Swearing","Verbal threats","Refusing care","Pushing / grabbing","Striking out","Kicking","Throwing objects","Property damage","Self-injury","Disinhibition","Other"];
+var triggers=["Personal care","Medication due","Medication recently given","Pain / discomfort","Noise / overstimulation","Fatigue","Poor sleep","Hunger / thirst","Bowel / bladder discomfort","Change of routine","Transition / waiting","Unfamiliar person","Demand / request","Conflict / interaction","Unknown"];
+var interventions=["Quiet space","Reassurance","Validation","Distraction / redirection","Reduced demands","Change of staff approach","Snack / drink","Pain relief as prescribed","PRN medication as prescribed","Sensory reduction","Preferred activity","Time alone / space","No intervention"];
+function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function active(){return state.people.find(function(p){return p&&p.id===state.active;})||state.people[0];}
+function mine(){return state.logs.filter(function(x){return x.person===state.active;});}
+function medsMine(){return state.medLogs.filter(function(x){return x.person===state.active;});}
+function todayKey(){return new Date().toISOString().slice(0,10);}
+function levelName(n){return ["Calm","Unsettled","Agitated","Highly agitated","Aggressive"][Number(n)]||"Unknown";}
+function renderTabs(){
+  document.getElementById("activeBadge").textContent=active().name||"Profile";
+  var el=document.getElementById("tabs");
+  el.innerHTML=tabDefs.map(function(t){return '<button class="'+(current===t[0]?"on":"")+'" data-tab="'+t[0]+'">'+t[1]+'</button>';}).join("");
+  Array.prototype.forEach.call(el.querySelectorAll("button"),function(b){b.onclick=function(){current=b.dataset.tab;render();};});
+}
+function card(s,cls){return '<div class="card '+(cls||"")+'">'+s+'</div>';}
+function chips(name,arr){return '<div class="row chips" data-name="'+name+'">'+arr.map(function(v){return '<button type="button" class="chip" data-v="'+esc(v)+'">'+esc(v)+'</button>';}).join("")+'</div>';}
+function selected(name){return Array.prototype.map.call(document.querySelectorAll('.chips[data-name="'+name+'"] .chip.on'),function(x){return x.dataset.v;});}
+function withinDays(ts,days){return (Date.now()-new Date(ts).getTime())<=days*86400000;}
+function summary(days){
+  var l=mine().filter(function(x){return withinDays(x.ts,days);});
+  var severe=l.filter(function(x){return Number(x.level)>=3;});
+  return {all:l,severe:severe,avg:l.length?(l.reduce(function(a,x){return a+Number(x.level||0);},0)/l.length):0};
+}
+function countMap(arr,field){
+  var m={};arr.forEach(function(x){(x[field]||[]).forEach(function(v){m[v]=(m[v]||0)+1;});});return m;
+}
+function topKeys(m,n){return Object.keys(m).sort(function(a,b){return m[b]-m[a];}).slice(0,n);}
+function insights(days){
+  var l=summary(days).all, out=[];
+  if(l.length<3)return out;
+  var hour={}, factors=countMap(l,"triggers"), bh=countMap(l,"behaviours"), improves={}, outcomes={};
+  l.forEach(function(x){
+    var h=new Date(x.ts).getHours();hour[h]=(hour[h]||0)+Number(x.level||0);
+    outcomes[x.outcome]=(outcomes[x.outcome]||0)+1;
+    if(x.outcome==="Much calmer"||x.outcome==="Somewhat calmer")(x.interventions||[]).forEach(function(t){improves[t]=(improves[t]||0)+1;});
+  });
+  var peak=Object.keys(hour).sort(function(a,b){return hour[b]-hour[a];})[0];
+  var fac=topKeys(factors,1)[0], beh=topKeys(bh,1)[0], intv=topKeys(improves,1)[0];
+  if(peak!=null)out.push("Highest recorded intensity clusters around "+String(peak).padStart(2,"0")+":00.");
+  if(fac)out.push("Most frequently recorded possible factor: "+fac+" ("+factors[fac]+" records).");
+  if(beh)out.push("Most frequently recorded behaviour: "+beh+" ("+bh[beh]+" records).");
+  if(intv)out.push(intv+" is the intervention most often recorded alongside improvement ("+improves[intv]+" times).");
+  var severe=l.filter(function(x){return Number(x.level)>=3;});
+  if(severe.length){
+    var poor=severe.filter(function(x){return x.sleep==="Poor"||x.sleep==="Interrupted";}).length;
+    var pain=severe.filter(function(x){return Number(x.pain||0)>=4;}).length;
+    out.push(poor+" of "+severe.length+" high-intensity records followed poor or interrupted sleep.");
+    out.push(pain+" of "+severe.length+" high-intensity records included pain rated 4/10 or above.");
+  }
+  var m=medsMine().filter(function(x){return withinDays(x.ts,days);});
+  if(m.length&&severe.length){
+    var near=0, after=0;
+    severe.forEach(function(x){
+      var xt=new Date(x.ts).getTime();
+      if(m.some(function(mm){return Math.abs(xt-new Date(mm.ts).getTime())<=2*3600000;}))near++;
+      if(m.some(function(mm){var d=xt-new Date(mm.ts).getTime();return d>=0&&d<=2*3600000;}))after++;
+    });
+    out.push(near+" of "+severe.length+" high-intensity records occurred within 2 hours either side of a recorded medication administration.");
+    out.push(after+" of "+severe.length+" occurred in the 2 hours after a recorded medication administration. Timing association only.");
+  }
+  return out;
+}
+function dailySeries(days){
+  var out=[], now=new Date();now.setHours(23,59,59,999);
+  for(var i=days-1;i>=0;i--){
+    var d=new Date(now);d.setDate(now.getDate()-i);var key=d.toISOString().slice(0,10);
+    var rows=mine().filter(function(x){return x.date===key;});
+    out.push({date:key,label:(d.getMonth()+1)+"/"+d.getDate(),count:rows.length,intensity:rows.reduce(function(a,x){return a+Number(x.level||0);},0),high:rows.filter(function(x){return Number(x.level)>=3;}).length});
+  }
+  return out;
+}
+function bars(series,field){
+  var max=Math.max(1,...series.map(function(x){return x[field];}));
+  return '<div class="chart">'+series.map(function(x,i){
+    var show=series.length<=7||i===0||i===series.length-1||i%Math.max(1,Math.floor(series.length/5))===0;
+    return '<div class="col" title="'+esc(x.date)+': '+x[field]+'"><span style="height:'+Math.max(2,100*x[field]/max)+'%"></span>'+(show?'<i>'+esc(x.label)+'</i>':'')+'</div>';
+  }).join("")+'</div>';
+}
+function medicationBehaviourChart(days){
+  var cutoff=Date.now()-days*86400000, logs=mine().filter(function(x){return new Date(x.ts).getTime()>=cutoff;}), meds=medsMine().filter(function(x){return new Date(x.ts).getTime()>=cutoff;});
+  if(!logs.length&&!meds.length)return '<div class="empty">No behaviour or medication events in this period.</div>';
+  var start=Date.now()-days*86400000, span=days*86400000;
+  var dots=logs.slice(-100).map(function(x){var left=100*(new Date(x.ts).getTime()-start)/span,bottom=12+Number(x.level||0)*24;return '<span class="eventdot '+(Number(x.level)>=3?'high':'')+'" style="left:'+left+'%;bottom:'+bottom+'px" title="'+esc(levelName(x.level))+'"></span>';}).join("");
+  var marks=meds.slice(-100).map(function(x){var left=100*(new Date(x.ts).getTime()-start)/span;return '<span class="medmark" style="left:'+left+'%" title="'+esc(x.name)+'"></span>';}).join("");
+  return '<div class="timelineChart"><div class="axisline" style="bottom:36px"></div><div class="axisline" style="bottom:84px"></div><div class="axisline" style="bottom:132px"></div>'+marks+dots+'<span class="axislabel" style="left:1%">-'+days+'d</span><span class="axislabel" style="left:50%">mid</span><span class="axislabel" style="left:98%">now</span></div><div class="legend"><span><i class="dot"></i>behaviour</span><span><i class="dot high"></i>high intensity</span><span><i class="dot med"></i>medication time</span></div>';
+}
+function prnStats(days){
+  var prn=medsMine().filter(function(x){return x.type==="PRN"&&withinDays(x.ts,days);});
+  if(!prn.length)return {n:0,text:"No PRN administrations recorded in this period."};
+  var improved=0, observed=0;
+  prn.forEach(function(p){
+    var pt=new Date(p.ts).getTime(), before=mine().filter(function(x){var d=pt-new Date(x.ts).getTime();return d>=0&&d<=2*3600000;}).sort(function(a,b){return new Date(b.ts)-new Date(a.ts);})[0];
+    var after=mine().filter(function(x){var d=new Date(x.ts).getTime()-pt;return d>=0&&d<=2*3600000;}).sort(function(a,b){return new Date(a.ts)-new Date(b.ts);})[0];
+    if(before&&after){observed++;if(Number(after.level)<Number(before.level))improved++;}
+  });
+  return {n:prn.length,text:observed?improved+" of "+observed+" PRN administrations with comparable behaviour records had a lower recorded intensity within 2 hours.":"PRN administrations are recorded, but there are not enough before/after behaviour observations to compare."};
+}
+function homeView(){
+  var s=summary(1), recent=mine().slice().sort(function(a,b){return new Date(b.ts)-new Date(a.ts);}).slice(0,3);
+  return v8Header()+
+  (state.settings.demoMode?'<div class="demoBanner"><b>DEMO MODE</b><span>Fictional data only</span></div>':'')+
+  '<h1 class="h1">How are they right now? <span class="score">V11</span></h1><div class="p">Tap once to start a quick observation. Add more detail only when you need it.</div>'+
+  '<div class="statusGrid">'+
+    '<button class="s0" data-level="0"><b>Calm</b><small>baseline / settled</small></button>'+
+    '<button class="s1" data-level="1"><b>Unsettled</b><small>early change</small></button>'+
+    '<button class="s2" data-level="2"><b>Agitated</b><small>clear agitation</small></button>'+
+    '<button class="s3" data-level="3"><b>High</b><small>high agitation</small></button>'+
+    '<button class="s4" data-level="4"><b>Aggressive</b><small>aggression / incident</small></button>'+
+  '</div>'+
+  '<div class="quickActions"><button data-go="log">＋ Full incident</button><button data-go="meds">💊 Record medication</button></div>'+ 
+  '<div class="todayStrip"><div class="card"><span class="muted">Last observation</span><b>'+esc(recent[0]?levelName(recent[0].level):"None yet")+'</b></div><div class="card"><span class="muted">Last medication</span><b>'+esc(medsMine().length?medsMine().slice().sort(function(a,b){return new Date(b.ts)-new Date(a.ts);})[0].name:"None yet")+'</b></div></div>'+
+  '<div class="releaseBanner"><b>Staff & Tracking Upgrade — V11</b><div class="warnText">For structured recording and review. NeuroPattern does not diagnose, predict aggression, prove medication causation, or replace clinical judgement, prescribing guidance, safeguarding procedures or emergency protocols.</div></div>'+
+  '<div class="patternHero"><div class="eyebrow">7-day pattern watch</div><strong>'+esc(patternWatch())+'</strong><div class="p">Recorded association only — not a prediction or proof of cause.</div></div>'+
+  '<div class="grid3"><div class="card stat"><div class="big">'+s.all.length+'</div><div class="small">today</div></div><div class="card stat"><div class="big">'+s.severe.length+'</div><div class="small">high intensity</div></div><div class="card stat"><div class="big">'+medsMine().filter(function(x){return withinDays(x.ts,1);}).length+'</div><div class="small">meds logged</div></div></div>'+
+  '<div class="h2">Recent</div>'+(recent.length?recent.map(function(x){return card('<span class="timelineLevel tl'+Number(x.level||0)+'">'+esc(levelName(x.level))+'</span> <b>'+new Date(x.ts).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})+'</b><div class="p">'+esc((x.behaviours||[]).join(", ")||x.type||"Observation")+'</div><button class="mini" data-delete-kind="logs" data-delete-id="'+esc(x.id)+'">Delete</button>');}).join(""):card('<div class="empty">No observations yet.</div>'));
+}
+function logView(){
+  var er=editingId?state.logs.find(function(x){return x.id===editingId;}):null;return v8Header()+'<h1 class="h1">'+(er?'Edit observation':'Behaviour / incident record')+'</h1><form id="logForm">'+
+  '<div class="grid2"><div class="field"><div class="label">Entry type</div><select name="type"><option>Observation</option><option>Incident</option></select></div>'+
+  '<div class="field"><div class="label">Intensity</div><select name="level" id="levelSelect"><option value="0">0 — Calm</option><option value="1">1 — Unsettled</option><option value="2">2 — Agitated</option><option value="3">3 — Highly agitated</option><option value="4">4 — Aggressive</option></select></div></div>'+
+  '<div class="field"><div class="label">Behaviour</div>'+chips("behaviours",behaviours)+'</div>'+
+  '<div class="field"><div class="label">Possible factors / antecedents</div>'+chips("triggers",triggers)+'</div>'+
+  '<div class="field"><div class="label">What happened immediately before?</div><textarea name="antecedent" placeholder="Factual description of the antecedent"></textarea></div>'+
+  '<div class="field"><div class="label">What happened immediately after?</div><textarea name="consequence" placeholder="Consequence / response / recovery"></textarea></div>'+
+  '<div class="grid2"><div class="field"><div class="label">Pain 0–10</div><input class="inp" type="number" min="0" max="10" name="pain" value="0"></div>'+
+  '<div class="field"><div class="label">Sleep</div><select name="sleep"><option>Unknown</option><option>Good</option><option>Interrupted</option><option>Poor</option></select></div></div>'+
+  '<div class="field"><div class="label">Intervention / de-escalation</div>'+chips("interventions",interventions)+'</div>'+
+  '<div class="field"><div class="label">Outcome</div><select name="outcome"><option>Not known</option><option>Much calmer</option><option>Somewhat calmer</option><option>No change</option><option>More agitated</option></select></div>'+
+  '<div class="field row"><label class="chip"><input type="checkbox" name="injury"> Injury</label><label class="chip"><input type="checkbox" name="damage"> Property damage</label><label class="chip"><input type="checkbox" name="restrictive"> Restrictive intervention</label></div>'+
+  '<div class="field"><div class="label">Duration (minutes)</div><input class="inp" type="number" min="0" name="duration" placeholder="Optional"></div>'+
+  '<div class="field"><div class="label">Additional factual notes</div><textarea name="notes"></textarea></div>'+
+  '<button class="btn primary">'+(er?'Save changes':'Save record')+'</button></form>';
+}
+function timelineView(){
+  var ev=mine().map(function(x){var y=Object.assign({},x);y.kind="beh";return y;})
+  .concat(medsMine().map(function(x){var y=Object.assign({},x);y.kind="med";return y;}))
+  .concat(state.handovers.filter(function(x){return x.person===state.active;}).map(function(x){var y=Object.assign({},x);y.kind="handover";return y;}))
+  .sort(function(a,b){return new Date(b.ts)-new Date(a.ts);});
+  var head=v8Header()+'<h1 class="h1">24-hour timeline</h1><div class="p">Behaviour, medication and handover entries in one chronological view.</div>';
+  if(!ev.length)return head+card('<div class="empty">No entries yet.</div>');
+  return head+ev.slice(0,150).map(function(x){
+    if(x.kind==="med")return '<div class="card event"><div class="eventHead"><div class="eventTitle">💊 '+esc(x.name)+'</div><div class="muted">'+new Date(x.ts).toLocaleString()+'</div></div><div class="p">'+esc(x.dose||"")+' • '+esc(x.type||"Regular")+'</div></div>';
+    if(x.kind==="handover")return '<div class="card event amber"><div class="eventHead"><div class="eventTitle">📝 Handover</div><div class="muted">'+new Date(x.ts).toLocaleString()+'</div></div><div class="p">'+esc(x.note)+'</div></div>';
+    return '<div class="card event '+(Number(x.level)>=3?"red":"")+'"><div class="eventHead"><div class="eventTitle">'+esc(x.type)+' • '+esc(levelName(x.level))+'</div><div class="muted">'+new Date(x.ts).toLocaleString()+'</div></div>'+
+      '<div class="p">'+esc((x.behaviours||[]).join(", ")||"No behaviour selected")+'</div><div class="muted">Possible factors: '+esc((x.triggers||[]).join(", ")||"not recorded")+'</div>'+
+      (x.duration?'<div class="pill">'+esc(x.duration)+' min</div>':'')+(x.injury?'<div class="pill">injury</div>':'')+(x.damage?'<div class="pill">property damage</div>':'')+'</div>';
+  }).join("");
+}
+function patternsView(){
+  var days=patternDays, s=summary(days), ins=insights(days), hours=new Array(24).fill(0), factors={}, interventions={}, series=dailySeries(days), prn=prnStats(days);
+  s.all.forEach(function(x){
+    hours[new Date(x.ts).getHours()]+=Number(x.level||0);
+    (x.triggers||[]).forEach(function(t){factors[t]=(factors[t]||0)+1;});
+    if(x.outcome==="Much calmer"||x.outcome==="Somewhat calmer")(x.interventions||[]).forEach(function(t){interventions[t]=(interventions[t]||0)+1;});
+  });
+  var top=topKeys(factors,8), max=Math.max(1,...top.map(function(k){return factors[k];}));
+  var topInt=topKeys(interventions,6), maxInt=Math.max(1,...topInt.map(function(k){return interventions[k];}));
+  return v8Header()+'<h1 class="h1">Pattern Intelligence</h1><div class="p">Visual trends and recorded associations for '+esc(active().name)+'.</div>'+
+  '<div class="range"><button data-range="7" class="'+(days===7?'on':'')+'">7 days</button><button data-range="30" class="'+(days===30?'on':'')+'">30 days</button><button data-range="90" class="'+(days===90?'on':'')+'">90 days</button></div>'+
+  '<div class="grid3"><div class="card stat"><div class="big">'+s.all.length+'</div><div class="small">records</div></div><div class="card stat"><div class="big">'+s.severe.length+'</div><div class="small">high intensity</div></div><div class="card stat"><div class="big">'+s.avg.toFixed(1)+'</div><div class="small">avg intensity</div></div></div>'+
+  card('<b>Association, not causation</b><div class="p">Pattern Intelligence summarises what was recorded together or close in time. It does not establish that medication, pain, sleep, a person or an event caused behaviour.</div>','notice')+
+  '<div class="h2">Daily behaviour intensity</div>'+bars(series,"intensity")+
+  '<div class="h2">Medication ↔ behaviour timeline</div>'+medicationBehaviourChart(days)+
+  '<div class="h2">Pattern observations</div>'+(ins.length?ins.map(function(x){return card('<div class="p insightStrong">'+esc(x)+'</div>');}).join(""):card('<div class="empty">At least 3 records are needed for useful pattern observations.</div>'))+
+  '<div class="h2">PRN review</div>'+card('<span class="score">'+prn.n+' PRN</span><div class="p">'+esc(prn.text)+'</div>')+
+  '<div class="h2">24-hour intensity heatmap</div><div class="heat">'+hours.map(function(v,i){return '<div class="heatCell">'+String(i).padStart(2,"0")+'<br><b>'+v+'</b></div>';}).join("")+'</div>'+
+  '<div class="h2">Possible factors</div>'+(top.length?top.map(function(k){return '<div class="barrow"><span>'+esc(k)+'</span><div class="bar"><span style="width:'+(100*factors[k]/max)+'%"></span></div><b>'+factors[k]+'</b></div>';}).join(""):card('<div class="empty">No factor data yet.</div>'))+
+  '<div class="h2">Interventions recorded with improvement</div>'+(topInt.length?topInt.map(function(k){return '<div class="barrow"><span>'+esc(k)+'</span><div class="bar"><span style="width:'+(100*interventions[k]/maxInt)+'%"></span></div><b>'+interventions[k]+'</b></div>';}).join(""):card('<div class="empty">No improvement/intervention data yet.</div>'));
+}
+function lastGivenFor(name){
+  var x=medsMine().filter(function(m){return m.name===name;}).sort(function(a,b){return new Date(b.ts)-new Date(a.ts);})[0];
+  return x?new Date(x.ts).toLocaleString():"Not recorded";
+}
+function medsView(){
+  var list=state.meds.filter(function(m){return m.person===state.active;}), recent=medsMine().slice().sort(function(a,b){return new Date(b.ts)-new Date(a.ts);}).slice(0,8);
+  var html=v8Header()+'<h1 class="h1">Medication</h1><div class="p">Record actual administration time for regular and PRN medication.</div>';
+  html+=list.length?list.map(function(m){return '<div class="card"><div class="profile"><div><b>'+esc(m.name)+'</b><div class="muted">'+esc(m.dose||"")+' • '+esc(m.schedule||"No schedule entered")+'</div><div class="lastGiven">Last given: '+esc(lastGivenFor(m.name))+'</div></div><span class="medType">'+esc(m.kind||"Regular")+'</span></div><div class="grid2"><button class="btn secondary give" data-id="'+esc(m.id)+'" data-type="Regular">Record regular dose</button><button class="btn secondary give" data-id="'+esc(m.id)+'" data-type="PRN">Record PRN dose</button></div></div>';}).join(""):card('<div class="empty">No medications added yet.</div>');
+  html+='<div class="h2">Add medication</div><form id="medForm"><input class="inp" name="name" placeholder="Medication name" required><div class="grid2"><input class="inp" name="dose" placeholder="Dose"><input class="inp" name="schedule" placeholder="Time e.g. 20:00"></div><select name="kind"><option>Regular</option><option>PRN</option></select><button class="btn primary">Add medication</button></form>';
+  if(recent.length){html+='<div class="h2">Recent administrations</div>'+recent.map(function(x){return card('<div class="profile"><div><b>'+esc(x.name)+'</b><div class="muted">'+new Date(x.ts).toLocaleString()+' • '+esc(x.type)+'</div></div><div>'+esc(x.dose||"")+'</div>');}).join("");}
+  var pp=pendingPrn();
+  if(pp)html+='<div class="h2">PRN follow-up</div><div class="prnFollow"><b>'+esc(pp.name)+' PRN recorded '+new Date(pp.ts).toLocaleString()+'</b><div class="p">Record a follow-up observation when clinically appropriate so the timeline can compare what was recorded before and after the PRN.</div><button class="btn primary" id="prnFollowBtn" data-prn="'+esc(pp.id)+'">Record follow-up</button></div>';
+  return html;
+}
+function peopleView(){
+  var html=v8Header()+'<h1 class="h1">People / service users</h1><div class="p">Each profile keeps separate behaviour, medication and handover records on this device.</div>';
+  html+=state.people.map(function(p){return '<div class="card"><div class="profile"><div><b>'+esc(p.name)+'</b><div class="muted">'+state.logs.filter(function(x){return x.person===p.id;}).length+' behaviour records</div></div><button class="chip selectPerson '+(p.id===state.active?"on":"")+'" data-id="'+esc(p.id)+'">'+(p.id===state.active?"Active":"Select")+'</button></div>'+
+  ((p.baseline||p.communication||p.riskNotes)?'<div class="sep"></div><div class="muted">'+(p.baseline?'Baseline: '+esc(p.baseline)+'<br>':'')+(p.communication?'Communication: '+esc(p.communication)+'<br>':'')+(p.riskNotes?'Key risks: '+esc(p.riskNotes):'')+'</div>':'')+'</div>';}).join("");
+  html+='<div class="h2">Add person</div><form id="personForm"><input class="inp" name="name" placeholder="Preferred name / identifier" required><textarea name="baseline" placeholder="Usual baseline presentation"></textarea><textarea name="communication" placeholder="Communication preferences / support"></textarea><textarea name="riskNotes" placeholder="Key risk or safety notes"></textarea><button class="btn primary">Add profile</button></form>';
+  return html;
+}
+function handoverSummary(){
+  var cutoff=Date.now()-12*3600000,l=mine().filter(function(x){return new Date(x.ts).getTime()>=cutoff;}),m=medsMine().filter(function(x){return new Date(x.ts).getTime()>=cutoff;}),sev=l.filter(function(x){return Number(x.level)>=3;});
+  var pieces=["Last 12h: "+l.length+" behaviour/mood records",sev.length+" high-intensity",m.length+" medication administrations"];
+  if(sev.length)pieces.push("Latest high-intensity record: "+new Date(sev[sev.length-1].ts).toLocaleString());
+  var i=insights(7);if(i.length)pieces.push("7-day pattern: "+i[0]);
+  return pieces.join(". ")+".";
+}
+
+function settingsView(){
+  return v8Header()+'<h1 class="h1">Settings & About</h1>'+
+  '<div class="card"><div class="settingsGroup"><h3>Privacy & access</h3>'+
+    '<div class="settingsRow"><div class="copy"><b>App PIN</b><small>Convenience lock for this local build.</small></div><button class="btn secondary" id="pinBtn">'+(state.settings.pinEnabled?'Change PIN':'Set PIN')+'</button></div>'+
+    '<div class="settingsRow"><div class="copy"><b>Auto-lock</b><small>Lock after inactivity.</small></div><select id="lockMinutes"><option value="1">1 min</option><option value="5">5 min</option><option value="15">15 min</option><option value="30">30 min</option></select></div>'+
+    (state.settings.pinEnabled?'<button class="btn secondary" id="lockNowBtn">Lock now</button><button class="btn secondary" id="disablePinBtn">Disable PIN</button>':'')+
+  '</div></div>'+
+  '<div class="card"><div class="settingsGroup"><h3>Demo mode</h3><div class="settingsRow"><div class="copy"><b>Fictional demonstration data</b><small>Useful for screenshots, training and promotion without using a real person’s information.</small></div><button class="btn secondary" id="demoBtn">'+(state.settings.demoMode?'Clear demo':'Load demo')+'</button></div></div></div>'+
+  '<div class="card"><div class="settingsGroup"><h3>Release information</h3><div class="aboutGrid"><div class="card"><b>V10</b><span class="tiny">app version</span></div><div class="card"><b>Local</b><span class="tiny">data storage</span></div></div><div class="p">NeuroPattern is designed for structured recording and pattern review. This build remains a local-device release candidate, not a managed clinical records system.</div></div></div>'+
+
+  '<div class="card"><div class="settingsGroup"><h3>Staff accounts</h3><div class="p">Local staff logins automatically attribute records to the signed-in user.</div>'+
+  (canManageUsers()?'<form id="addStaffForm"><div class="grid2"><div class="field"><div class="label">Name</div><input class="inp" name="name" required></div><div class="field"><div class="label">Initials / ID</div><input class="inp" name="initials" maxlength="8" required></div></div><div class="grid2"><div class="field"><div class="label">PIN</div><input class="inp" name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,6}" required></div><div class="field"><div class="label">Role</div><select name="role"><option>Staff</option><option>Senior/Manager</option><option>Admin</option></select></div></div><button class="btn secondary">Add staff account</button></form>':'<div class="muted">Only an Admin can add or disable staff accounts.</div>')+
+  (state.users.length?state.users.map(function(u){return '<div class="userAdmin"><div class="userAdminHead"><div><b>'+esc(u.name)+'</b><div class="muted">'+esc(u.initials)+' • '+esc(u.role)+(u.active===false?' • disabled':'')+'</div></div>'+(canManageUsers()&&currentUser()&&u.id!==currentUser().id?'<button class="tinyBtn" data-toggle-user="'+esc(u.id)+'">'+(u.active===false?'Enable':'Disable')+'</button>':'')+'</div></div>';}).join(""):'')+
+  '</div></div>'+
+  '<div class="card"><div class="settingsGroup"><h3>Motion & interface</h3><div class="settingsRow"><div class="copy"><b>Reduced animation</b><small>Turns off splash and page transition animations.</small></div><button class="switch '+(state.settings.reducedMotion?'on':'')+'" id="motionToggle" aria-label="Reduced animation"></button></div></div></div>'+
+  '<div class="dangerZone"><b>Data controls</b><div class="p">Export a JSON backup before deleting the app or clearing data.</div><button class="dangerBtn" id="deleteAllBtn">Delete all local data</button></div>';
+}
+
+function reportsView(){
+  var r=reportRows(reportDays);
+  var html=v8Header()+'<h1 class="h1">Reports & handover</h1>'+
+  '<div class="seg"><button data-report-days="7" class="'+(reportDays===7?'on':'')+'">7 days</button><button data-report-days="30" class="'+(reportDays===30?'on':'')+'">30 days</button><button data-report-days="90" class="'+(reportDays===90?'on':'')+'">90 days</button></div>'+
+  '<div class="reportGrid"><div class="card"><div class="big">'+r.logs.length+'</div><div class="tiny">behaviour records</div></div><div class="card"><div class="big">'+r.incidents.length+'</div><div class="tiny">incidents</div></div><div class="card"><div class="big">'+r.severe.length+'</div><div class="tiny">high intensity</div></div><div class="card"><div class="big">'+r.meds.length+'</div><div class="tiny">med administrations</div></div></div>'+
+  card('<b>Auto handover snapshot</b><div class="p">'+esc(handoverSummary())+'</div>','notice')+
+  '<form id="handoverForm"><div class="field"><div class="label">Shift handover note</div><textarea name="note" required placeholder="Concise, factual and relevant to the next shift"></textarea></div><button class="btn primary">Save handover</button></form>'+
+  '<div class="h2">Report export</div><div class="card"><button class="btn secondary" id="reportTxtBtn">Export '+reportDays+'-day summary</button><button class="btn secondary" id="csvBtn">Export behaviour CSV</button><button class="btn secondary" id="jsonBtn">Export full backup JSON</button><button class="btn secondary" id="importBtn">Import backup JSON</button><input id="importFile" type="file" accept="application/json" style="display:none"></div>'+
+  '<div class="h2">Audit trail</div>';
+  var au=(state.audit||[]).filter(function(a){return a.person===state.active;}).slice().reverse().slice(0,30);
+  html+=au.length?au.map(function(a){return '<div class="auditrow"><b>'+esc(a.action)+' • '+esc(a.staff||"Not set")+'</b><div>'+esc(a.detail||"")+'</div><div class="muted">'+new Date(a.ts).toLocaleString()+'</div></div>';}).join(""):card('<div class="empty">No audit activity yet.</div>');
+  var hs=state.handovers.filter(function(h){return h.person===state.active;}).slice().reverse().slice(0,10);
+  if(hs.length)html+='<div class="h2">Recent handovers</div>'+hs.map(function(h){return card('<div class="muted">'+new Date(h.ts).toLocaleString()+' • '+esc(h.staff||"Not set")+'</div><div class="p">'+esc(h.note)+'</div>');}).join("");
+  html+=card('<b>Release note</b><div class="warnText">This APK stores information locally on the device. Before deployment with identifiable health or care information, the organisation should complete data-protection, information-security and clinical-governance review, define retention/access controls, and provide an appropriate privacy notice.</div>','notice');
+  return html;
+}
+
+
+
+function currentUser(){return (state.users||[]).find(function(u){return u.id===state.sessionUserId;})||null;}
+function currentRole(){var u=currentUser();return u?u.role:"Legacy";}
+function canManageUsers(){var u=currentUser();return !u||u.role==="Admin";}
+function logoutUser(){audit("LOGOUT","Staff signed out");state.sessionUserId="";save();showLogin();}
+function createStaffUser(name,initials,pin,role){
+  name=(name||"").trim();initials=(initials||"").trim().toUpperCase().slice(0,8);role=role||"Staff";
+  if(!name||!initials||!/^\d{4,6}$/.test(pin||""))return false;
+  var u={id:"u"+Date.now()+Math.random(),name:name,initials:initials,role:role,pinHash:hashPin(pin),active:true,created:new Date().toISOString()};
+  state.users.push(u);state.sessionUserId=u.id;state.settings.staffInitials=initials;audit("CREATE_USER",name+" • "+role);save();return true;
+}
+function showLogin(){
+  var old=document.getElementById("loginOverlay");if(old)old.remove();
+  if(!state.users.length){showFirstAdmin();return;}
+  var d=document.createElement("div");d.id="loginOverlay";d.className="loginOverlay";
+  d.innerHTML='<div class="loginPanel"><div class="loginBrand"><div class="loginLogo">N</div><div><h2>Staff sign in</h2><div class="muted">Choose your profile</div></div></div><div id="userChoices">'+
+  state.users.filter(function(u){return u.active!==false;}).map(function(u){return '<button class="userChoice" data-login-user="'+esc(u.id)+'"><span class="avatar">'+esc(u.initials)+'</span><span style="flex:1"><b>'+esc(u.name)+'</b><div class="muted">'+esc(u.initials)+'</div></span><span class="roleTag">'+esc(u.role)+'</span></button>';}).join("")+
+  '</div><div class="muted" style="margin-top:12px">Accounts are stored on this device only.</div></div>';
+  document.body.appendChild(d);
+  d.querySelectorAll("[data-login-user]").forEach(function(b){b.onclick=function(){var u=state.users.find(function(x){return x.id===b.dataset.loginUser;});if(!u)return;var p=prompt("PIN for "+u.name);if(hashPin(p||"")===u.pinHash){state.sessionUserId=u.id;state.settings.staffInitials=u.initials;state.settings.lastActive=Date.now();save();d.remove();render();audit("LOGIN","Staff signed in");save();}else if(p!==null)alert("Incorrect PIN.");};});
+}
+function showFirstAdmin(){
+  var d=document.createElement("div");d.id="loginOverlay";d.className="loginOverlay";
+  d.innerHTML='<div class="loginPanel"><div class="loginBrand"><div class="loginLogo">N</div><div><h2>Create first staff account</h2><div class="muted">This first account will be the local Admin.</div></div></div><form id="firstAdminForm"><div class="field"><div class="label">Name</div><input class="inp" name="name" required placeholder="e.g. Chris Meechan"></div><div class="field"><div class="label">Initials / staff ID</div><input class="inp" name="initials" required maxlength="8" placeholder="e.g. CM"></div><div class="field"><div class="label">4–6 digit PIN</div><input class="inp" name="pin" inputmode="numeric" pattern="[0-9]{4,6}" required type="password"></div><button class="btn primary">Create Admin & sign in</button></form><div class="muted" style="margin-top:12px">This is a local-device account. It is not a cloud identity.</div></div>';
+  document.body.appendChild(d);
+  document.getElementById("firstAdminForm").onsubmit=function(e){e.preventDefault();var fd=new FormData(e.target);if(createStaffUser(fd.get("name"),fd.get("initials"),fd.get("pin"),"Admin")){d.remove();render();}else alert("Enter a name, initials and a 4–6 digit PIN.");};
+}
+function showQuickToast(rec){
+  var old=document.getElementById("quickToast");if(old)old.remove();
+  var d=document.createElement("div");d.id="quickToast";d.className="quickToast";
+  d.innerHTML='<div class="grow"><b>'+esc(levelName(rec.level))+' saved</b><div style="font-size:11px;opacity:.8">'+new Date(rec.ts).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})+' • '+esc(staff())+'</div></div><button class="details">ADD DETAILS</button><button class="undo">UNDO</button>';
+  document.body.appendChild(d);
+  d.querySelector(".details").onclick=function(){editingId=rec.id;current="log";d.remove();render();};
+  d.querySelector(".undo").onclick=function(){state.logs=state.logs.filter(function(x){return x.id!==rec.id;});audit("UNDO_QUICK","Quick observation removed",rec.person);save();d.remove();render();};
+  setTimeout(function(){if(d.parentNode)d.remove();},6500);
+}
+function quickSaveLevel(level){
+  var d=new Date(),rec={id:String(Date.now()),person:state.active,staff:staff()||"Not set",ts:d.toISOString(),date:d.toISOString().slice(0,10),type:"Observation",level:Number(level),behaviours:[],triggers:[],antecedent:"",consequence:"",pain:0,sleep:"Unknown",interventions:[],outcome:"Not known",injury:false,damage:false,restrictive:false,duration:0,notes:"",quick:true};
+  state.logs.push(rec);quickLastId=rec.id;audit("QUICK_OBSERVATION",levelName(level),rec.person);save();render();showQuickToast(rec);
+}
+function editFormSelections(rec){
+  if(!rec)return;
+  var ls=document.getElementById("levelSelect");if(ls)ls.value=String(rec.level);
+  var f=document.getElementById("logForm");if(!f)return;
+  ["type","antecedent","consequence","pain","sleep","outcome","duration","notes"].forEach(function(n){var el=f.elements[n];if(el&&rec[n]!=null)el.value=rec[n];});
+  ["injury","damage","restrictive"].forEach(function(n){var el=f.elements[n];if(el)el.checked=!!rec[n];});
+  [["behaviours",rec.behaviours],["triggers",rec.triggers],["interventions",rec.interventions]].forEach(function(a){(a[1]||[]).forEach(function(v){var b=document.querySelector('.chips[data-name="'+a[0]+'"] .chip[data-v="'+CSS.escape(v)+'"]');if(b)b.classList.add("on");});});
+}
+
+function hashPin(v){
+  // Lightweight local hash for convenience lock only; not cryptographic security.
+  var h=2166136261;
+  for(var i=0;i<v.length;i++){h^=v.charCodeAt(i);h=Math.imul(h,16777619);}
+  return String(h>>>0);
+}
+function touchActivity(){if(state&&state.settings){state.settings.lastActive=Date.now();}}
+function shouldAutoLock(){
+  if(!state.settings.pinEnabled)return false;
+  var mins=Number(state.settings.autoLockMinutes||5);
+  return Date.now()-Number(state.settings.lastActive||0) > mins*60000;
+}
+function setPin(pin){
+  if(!/^\d{4,6}$/.test(pin||"")){alert("Use a 4–6 digit PIN.");return false;}
+  state.settings.pinHash=hashPin(pin);state.settings.pinEnabled=true;state.settings.lastActive=Date.now();save();return true;
+}
+function disablePin(){state.settings.pinEnabled=false;state.settings.pinHash="";save();render();}
+function lockNow(){if(state.settings.pinEnabled){state.settings.lastActive=0;save();showLockScreen();}}
+function showLockScreen(){
+  if(!state.settings.pinEnabled)return;
+  var old=document.getElementById("npLock");if(old)old.remove();
+  var entered="";
+  var d=document.createElement("div");d.id="npLock";d.className="lockScreen";
+  d.innerHTML='<div class="lockCard"><div class="brandMark" style="margin:auto">N</div><h2>NeuroPattern locked</h2><div class="p">Enter your app PIN</div><div class="pinDots" id="pinDots">○ ○ ○ ○</div><div class="keypad">'+
+  [1,2,3,4,5,6,7,8,9].map(function(n){return '<button data-key="'+n+'">'+n+'</button>';}).join("")+
+  '<button data-key="clear">⌫</button><button data-key="0">0</button><button data-key="ok">✓</button></div><div class="p tiny">This PIN is a convenience lock for the local prototype. It is not a substitute for device encryption, secure authentication or organisational access controls.</div></div>';
+  document.body.appendChild(d);
+  function draw(){document.getElementById("pinDots").textContent=(entered?"● ".repeat(entered.length):"")+"○ ".repeat(Math.max(0,4-entered.length));}
+  d.querySelectorAll("[data-key]").forEach(function(b){b.onclick=function(){
+    var k=b.dataset.key;
+    if(k==="clear"){entered=entered.slice(0,-1);draw();return;}
+    if(k==="ok"){
+      if(hashPin(entered)===state.settings.pinHash){state.settings.lastActive=Date.now();save();d.remove();}
+      else{entered="";draw();alert("Incorrect PIN.");}
+      return;
+    }
+    if(entered.length<6){entered+=k;draw();}
+  };});
+  draw();
+}
+function seedDemo(){
+  var demoId="demo-person";
+  state.people=state.people.filter(function(p){return p.id!==demoId;});
+  state.people.push({id:demoId,name:"Demo Person",baseline:"Usually calm with predictable routine.",communication:"Short clear phrases; allow processing time.",riskNotes:"Fictional demo profile only."});
+  state.active=demoId;
+  var now=Date.now(), mk=function(h,l,b,t){var d=new Date(now-h*3600000);return {id:"d"+h+Math.random(),person:demoId,staff:"DM",ts:d.toISOString(),date:d.toISOString().slice(0,10),type:l>=3?"Incident":"Observation",level:l,behaviours:[b],triggers:[t],antecedent:"Fictional demo entry",consequence:"Fictional demo outcome",pain:"0",sleep:"Good",interventions:["Reassurance"],outcome:l>=2?"Somewhat calmer":"No change",injury:"No",damage:"No",restrictive:"No",duration:"5",notes:"Demo data — not a real person."};};
+  state.logs=state.logs.filter(function(x){return x.person!==demoId;}).concat([
+    mk(30,1,"Repetitive questioning","Waiting/transition"),
+    mk(26,2,"Pacing","Routine change"),
+    mk(22,3,"Raised voice","Noise/overstimulation"),
+    mk(18,1,"Repetitive questioning","Waiting/transition"),
+    mk(10,2,"Pacing","Fatigue"),
+    mk(5,0,"Other","Unknown")
+  ]);
+  state.meds=state.meds.filter(function(x){return x.person!==demoId;}).concat([{id:"dm1",person:demoId,name:"Demo medication",dose:"Demo dose",schedule:"08:00",kind:"Regular"}]);
+  state.medLogs=state.medLogs.filter(function(x){return x.person!==demoId;}).concat([{id:"dml1",person:demoId,staff:"DM",medId:"dm1",name:"Demo medication",dose:"Demo dose",type:"Regular",ts:new Date(now-24*3600000).toISOString(),date:new Date(now-24*3600000).toISOString().slice(0,10)}]);
+  state.settings.demoMode=true;audit("ENABLE_DEMO","Fictional demonstration dataset loaded",demoId);save();render();
+}
+function clearDemo(){
+  var demoId="demo-person";
+  ["logs","meds","medLogs","handovers","audit"].forEach(function(k){state[k]=(state[k]||[]).filter(function(x){return x.person!==demoId;});});
+  state.people=state.people.filter(function(p){return p.id!==demoId;});
+  if(!state.people.length)state.people=[{id:"p1",name:"Person 1",baseline:"",communication:"",riskNotes:""}];
+  state.active=state.people[0].id;state.settings.demoMode=false;save();render();
+}
+function deleteAllLocalData(){
+  if(!confirm("Delete ALL NeuroPattern data on this device? This cannot be undone unless you have exported a backup."))return;
+  localStorage.removeItem(KEY);location.reload();
+}
+function onboardingHtml(){
+  return '<div class="firstRunOverlay" id="firstRun"><div class="firstRunWrap">'+
+  '<div class="brandSplash"><div class="brandMark">N</div><div class="brandName">NeuroPattern</div><div class="brandTag">Behaviour • medication • pattern tracker</div><span class="releasePill">Public Release Candidate V10</span></div>'+
+  '<div class="card"><div class="onboardStep"><h3>1. What NeuroPattern does</h3><p>Records behaviour observations, incidents, possible factors, interventions, sleep, pain and medication administration times so you can review recorded patterns over time.</p></div>'+
+  '<div class="onboardStep"><h3>2. What it does not do</h3><p>It does not diagnose, predict aggression, prove that medication caused behaviour, or advise medication changes.</p></div>'+
+  '<div class="onboardStep"><h3>3. Data on this build</h3><p>Data is stored locally on this device. Before using identifiable health or care information in an organisation, appropriate privacy, security and clinical-governance controls are still required.</p></div>'+
+  '<div class="onboardStep"><h3>4. Safer use</h3><p>Use factual language, follow the person’s care plan and local safeguarding/emergency procedures, and export backups before uninstalling the app.</p></div>'+
+  '<button class="btn primary" id="acceptOnboarding">I understand — continue</button></div></div></div>';
+}
+function showOnboarding(){
+  if(state.settings.onboarded)return;
+  var wrap=document.createElement("div");wrap.innerHTML=onboardingHtml();document.body.appendChild(wrap.firstChild);
+  document.getElementById("acceptOnboarding").onclick=function(){state.settings.onboarded=true;save();document.getElementById("firstRun").remove();};
+}
+
+function staff(){var u=currentUser();return u?u.initials:(state.settings&&state.settings.staffInitials||"").trim();}
+function audit(action,detail,person){
+  state.audit=state.audit||[];
+  state.audit.push({id:"a"+Date.now()+Math.random(),ts:new Date().toISOString(),person:person||state.active,staff:staff()||"Not set",action:action,detail:detail||""});
+  if(state.audit.length>1000)state.audit=state.audit.slice(-1000);
+}
+function setStaffInitials(v){state.settings.staffInitials=(v||"").trim().slice(0,12);save();render();}
+function staffBar(){
+  return '<div class="staffbar"><span class="personBadge">Staff</span><input class="inp" id="staffInitials" maxlength="12" placeholder="Initials / ID" value="'+esc(staff())+'"><button class="mini" id="saveStaff">Save</button></div>';
+}
+function reportRows(days){
+  var logs=mine().filter(function(x){return withinDays(x.ts,days);});
+  var meds=medsMine().filter(function(x){return withinDays(x.ts,days);});
+  var hs=state.handovers.filter(function(x){return x.person===state.active&&withinDays(x.ts,days);});
+  return {logs:logs,meds:meds,hs:hs,severe:logs.filter(function(x){return Number(x.level)>=3;}),incidents:logs.filter(function(x){return x.type==="Incident";})};
+}
+function reportText(days){
+  var r=reportRows(days), ins=insights(days);
+  var t=[];
+  t.push("NeuroPattern "+days+"-day summary for "+active().name);
+  t.push("Behaviour/mood records: "+r.logs.length);
+  t.push("Incidents: "+r.incidents.length);
+  t.push("High-intensity records: "+r.severe.length);
+  t.push("Medication administrations: "+r.meds.length);
+  if(ins.length)t.push("Recorded patterns: "+ins.join(" "));
+  t.push("Important: these are recorded associations only and do not establish medication causation or provide treatment advice.");
+  return t.join("\n");
+}
+function exportReportTxt(){
+  download("NeuroPattern_"+active().name.replace(/\W+/g,"_")+"_"+reportDays+"day_report.txt",reportText(reportDays),"text/plain");
+  audit("EXPORT_REPORT",reportDays+"-day text report");save();
+}
+function pendingPrn(){
+  var prns=medsMine().filter(function(x){return x.type==="PRN";}).sort(function(a,b){return new Date(b.ts)-new Date(a.ts);});
+  return prns.find(function(p){
+    var pt=new Date(p.ts).getTime();
+    return !mine().some(function(x){var d=new Date(x.ts).getTime()-pt;return d>=30*60000&&d<=4*3600000&&x.prnFollowFor===p.id;});
+  })||null;
+}
+
+var lastDeleted=null, undoTimer=null;
+function setDark(on){state.settings=state.settings||{};state.settings.dark=!!on;save();document.body.classList.toggle("dark",!!on);}
+function toggleDark(){setDark(!state.settings.dark);render();}
+function removeRecord(kind,id){
+  var arr=state[kind]||[], idx=arr.findIndex(function(x){return x.id===id;});
+  if(idx<0)return;
+  lastDeleted={kind:kind,item:arr[idx],idx:idx};audit("DELETE_ENTRY",kind+" • "+id,(arr[idx]&&arr[idx].person)||state.active);arr.splice(idx,1);save();render();showUndo();
+}
+function showUndo(){
+  var old=document.getElementById("undoToast");if(old)old.remove();
+  var d=document.createElement("div");d.id="undoToast";d.className="undoToast";d.innerHTML='<span>Entry deleted</span><button id="undoDelete">UNDO</button>';document.body.appendChild(d);
+  document.getElementById("undoDelete").onclick=function(){if(lastDeleted){state[lastDeleted.kind].splice(lastDeleted.idx,0,lastDeleted.item);save();lastDeleted=null;render();}d.remove();};
+  clearTimeout(undoTimer);undoTimer=setTimeout(function(){if(d.parentNode)d.remove();lastDeleted=null;},5000);
+}
+function patternWatch(){
+  var ins=insights(7);return ins.length?ins[0]:"Keep recording observations to build a useful 7-day pattern.";
+}
+function v8Header(){
+  var u=currentUser();
+  return '<div class="v8top"><span class="personBadge">👤 '+esc(active().name)+'</span><span class="personBadge">✍ '+esc(u?u.name:(staff()||"Staff not set"))+(u?' • '+esc(u.role):'')+'</span><button class="iconbtn" id="darkToggle" aria-label="Toggle dark mode">'+(state.settings.dark?'☀️':'🌙')+'</button></div>'+
+  (u?'<div class="sessionBar"><span class="muted">Signed in as <b>'+esc(u.initials)+'</b></span><button class="tinyBtn" id="switchUserBtn">Switch user</button><button class="tinyBtn" id="logoutUserBtn">Log out</button></div>':'');
+}
+
+function render(){document.body.classList.toggle("dark",!!(state.settings&&state.settings.dark));document.body.classList.toggle("motionOff",!!(state.settings&&state.settings.reducedMotion));
+  try{
+    renderTabs();
+    var views={home:homeView,log:logView,timeline:timelineView,patterns:patternsView,meds:medsView,people:peopleView,reports:reportsView,settings:settingsView};
+    document.getElementById("app").innerHTML='<div class="page">'+views[current]()+'</div>';
+    bind();
+    if(current==="log"&&draftLevel!==null){var ls=document.getElementById("levelSelect");if(ls){ls.value=String(draftLevel);}draftLevel=null;}if(current==="log"&&editingId){editFormSelections(state.logs.find(function(x){return x.id===editingId;}));}
+  }catch(err){
+    console.error(err);
+    document.getElementById("tabs").innerHTML="";
+    document.getElementById("app").innerHTML='<div class="page"><h1 class="h1">NeuroPattern</h1>'+card('<b>Dashboard recovery</b><div class="p">A local data error prevented the dashboard from loading. You can reset NeuroPattern local data and reopen the app.</div><button class="btn dangerBtn" id="resetBtn">Reset local app data</button>','danger')+'</div>';
+    var r=document.getElementById("resetBtn");if(r)r.onclick=resetData;
+  }
+}
+function bind(){
+  Array.prototype.forEach.call(document.querySelectorAll("[data-go]"),function(b){b.onclick=function(){current=b.dataset.go;render();};});
+  Array.prototype.forEach.call(document.querySelectorAll("[data-range]"),function(b){b.onclick=function(){patternDays=Number(b.dataset.range);render();};});
+  Array.prototype.forEach.call(document.querySelectorAll("[data-level]"),function(b){b.onclick=function(){quickSaveLevel(Number(b.dataset.level));};});
+
+  var dt=document.getElementById("darkToggle");if(dt)dt.onclick=toggleDark;
+
+  var sw=document.getElementById("switchUserBtn");if(sw)sw.onclick=showLogin;
+  var lo=document.getElementById("logoutUserBtn");if(lo)lo.onclick=logoutUser;
+  var asf=document.getElementById("addStaffForm");if(asf)asf.onsubmit=function(e){e.preventDefault();var fd=new FormData(asf);if(createStaffUser(fd.get("name"),fd.get("initials"),fd.get("pin"),fd.get("role"))){audit("CREATE_USER",fd.get("name")+" • "+fd.get("role"));save();render();}else alert("Enter a name, initials and a 4–6 digit PIN.");};
+  Array.prototype.forEach.call(document.querySelectorAll("[data-toggle-user]"),function(b){b.onclick=function(){var u=state.users.find(function(x){return x.id===b.dataset.toggleUser;});if(!u)return;u.active=u.active===false?true:false;audit("USER_STATUS",u.name+" • "+(u.active?"enabled":"disabled"));save();render();};});
+  var mt=document.getElementById("motionToggle");if(mt)mt.onclick=function(){state.settings.reducedMotion=!state.settings.reducedMotion;save();document.body.classList.toggle("motionOff",state.settings.reducedMotion);render();};
+
+  Array.prototype.forEach.call(document.querySelectorAll("[data-delete-kind]"),function(b){b.onclick=function(){if(confirm("Delete this entry?"))removeRecord(b.dataset.deleteKind,b.dataset.deleteId);};});
+
+  Array.prototype.forEach.call(document.querySelectorAll("[data-quick]"),function(b){b.onclick=function(){draftLevel=Number(b.dataset.quick);current="log";render();};});
+  Array.prototype.forEach.call(document.querySelectorAll(".chips .chip"),function(b){b.onclick=function(){b.classList.toggle("on");};});
+  Array.prototype.forEach.call(document.querySelectorAll(".selectPerson"),function(b){b.onclick=function(){state.active=b.dataset.id;save();render();};});
+  Array.prototype.forEach.call(document.querySelectorAll(".give"),function(b){b.onclick=function(){var m=state.meds.find(function(x){return x.id===b.dataset.id;}),d=new Date();if(!m)return;var ml={id:String(Date.now()),person:state.active,staff:staff()||"Not set",medId:m.id,name:m.name,dose:m.dose,type:b.dataset.type,ts:d.toISOString(),date:d.toISOString().slice(0,10)};state.medLogs.push(ml);audit("MEDICATION_ADMIN",m.name+" • "+b.dataset.type,ml.person);save();render();};});
+  var f=document.getElementById("logForm");if(f)f.onsubmit=function(e){e.preventDefault();var fd=new FormData(f),d=new Date(),existing=editingId?state.logs.find(function(x){return x.id===editingId;}):null;var rec={id:existing?existing.id:String(Date.now()),person:state.active,staff:staff()||"Not set",ts:existing?existing.ts:d.toISOString(),updatedTs:existing?d.toISOString():"",date:(existing?existing.ts:d.toISOString()).slice(0,10),type:fd.get("type"),level:Number(fd.get("level")),behaviours:selected("behaviours"),triggers:selected("triggers"),antecedent:fd.get("antecedent"),consequence:fd.get("consequence"),pain:Number(fd.get("pain")||0),sleep:fd.get("sleep"),interventions:selected("interventions"),outcome:fd.get("outcome"),injury:fd.get("injury")==="on",damage:fd.get("damage")==="on",restrictive:fd.get("restrictive")==="on",duration:Number(fd.get("duration")||0),notes:fd.get("notes"),prnFollowFor:f.dataset.prnFollowFor||"",quick:existing?!!existing.quick:false};if(existing){var ix=state.logs.findIndex(function(x){return x.id===existing.id;});state.logs[ix]=rec;audit("EDIT_BEHAVIOUR",rec.type+" • "+levelName(rec.level),rec.person);}else{state.logs.push(rec);audit("SAVE_BEHAVIOUR",rec.type+" • "+levelName(rec.level),rec.person);}editingId=null;save();current="timeline";render();};
+  var mf=document.getElementById("medForm");if(mf)mf.onsubmit=function(e){e.preventDefault();var fd=new FormData(mf);var med={id:String(Date.now()),person:state.active,name:fd.get("name"),dose:fd.get("dose"),schedule:fd.get("schedule"),kind:fd.get("kind")};state.meds.push(med);audit("ADD_MEDICATION",med.name);save();render();};
+  var pf=document.getElementById("personForm");if(pf)pf.onsubmit=function(e){e.preventDefault();var fd=new FormData(pf),id="p"+Date.now();state.people.push({id:id,name:fd.get("name"),baseline:fd.get("baseline"),communication:fd.get("communication"),riskNotes:fd.get("riskNotes")});state.active=id;audit("ADD_PROFILE",fd.get("name"),id);save();render();};
+  var hf=document.getElementById("handoverForm");if(hf)hf.onsubmit=function(e){e.preventDefault();var fd=new FormData(hf);var h={id:String(Date.now()),person:state.active,staff:staff()||"Not set",ts:new Date().toISOString(),note:fd.get("note")};state.handovers.push(h);audit("SAVE_HANDOVER","Shift handover",h.person);save();render();};
+
+  var ss=document.getElementById("saveStaff"),si=document.getElementById("staffInitials");if(ss&&si)ss.onclick=function(){setStaffInitials(si.value);};
+
+  var pinBtn=document.getElementById("pinBtn");if(pinBtn)pinBtn.onclick=function(){var p=prompt("Choose a 4–6 digit PIN");if(p&&setPin(p)){alert("PIN enabled.");render();}};
+  var lockSel=document.getElementById("lockMinutes");if(lockSel){lockSel.value=String(state.settings.autoLockMinutes||5);lockSel.onchange=function(){state.settings.autoLockMinutes=Number(lockSel.value);save();};}
+  var lnb=document.getElementById("lockNowBtn");if(lnb)lnb.onclick=lockNow;
+  var dpb=document.getElementById("disablePinBtn");if(dpb)dpb.onclick=function(){if(confirm("Disable the app PIN?"))disablePin();};
+  var demo=document.getElementById("demoBtn");if(demo)demo.onclick=function(){state.settings.demoMode?clearDemo():seedDemo();};
+  var delall=document.getElementById("deleteAllBtn");if(delall)delall.onclick=deleteAllLocalData;
+
+  Array.prototype.forEach.call(document.querySelectorAll("[data-report-days]"),function(b){b.onclick=function(){reportDays=Number(b.dataset.reportDays);state.settings.reportDays=reportDays;save();render();};});
+  var rt=document.getElementById("reportTxtBtn");if(rt)rt.onclick=exportReportTxt;
+  var pfbtn=document.getElementById("prnFollowBtn");if(pfbtn)pfbtn.onclick=function(){draftLevel=null;current="log";render();var lf=document.getElementById("logForm");if(lf)lf.dataset.prnFollowFor=pfbtn.dataset.prn;};
+
+  var jb=document.getElementById("jsonBtn");if(jb)jb.onclick=exportJSON;
+  var cb=document.getElementById("csvBtn");if(cb)cb.onclick=exportCSV;
+  var ib=document.getElementById("importBtn"), fi=document.getElementById("importFile");if(ib&&fi){ib.onclick=function(){fi.click();};fi.onchange=importJSON;}
+}
+function download(name,text,type){var blob=new Blob([text],{type:type}),u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},1000);}
+function exportJSON(){audit("EXPORT_BACKUP","Full JSON backup");save();download("NeuroPattern-backup.json",JSON.stringify(state,null,2),"application/json");}
+function exportCSV(){audit("EXPORT_CSV","Behaviour CSV");save();
+  var rows=[["timestamp","type","level","behaviours","possible_factors","antecedent","consequence","pain","sleep","interventions","outcome","injury","property_damage","restrictive_intervention","duration_minutes","notes"]];
+  mine().forEach(function(x){rows.push([x.ts,x.type,x.level,(x.behaviours||[]).join("; "),(x.triggers||[]).join("; "),x.antecedent,x.consequence,x.pain,x.sleep,(x.interventions||[]).join("; "),x.outcome,x.injury,x.damage,x.restrictive,x.duration,x.notes]);});
+  var csv=rows.map(function(r){return r.map(function(v){return '"'+String(v==null?"":v).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
+  download("NeuroPattern-behaviour.csv",csv,"text/csv");
+}
+function importJSON(e){
+  var file=e.target.files&&e.target.files[0];if(!file)return;
+  var reader=new FileReader();reader.onload=function(){try{var d=JSON.parse(reader.result);if(!d||!Array.isArray(d.people))throw new Error("Invalid");state=d;save();alert("Backup imported.");current="home";render();}catch(err){alert("That file is not a valid NeuroPattern backup.");}};reader.readAsText(file);
+}
+function resetData(){try{[KEY].concat(OLD_KEYS).forEach(function(k){localStorage.removeItem(k);});}catch(e){}location.reload();}
+document.getElementById("quickAdd").onclick=function(){editingId=null;draftLevel=null;current="log";render();};
+render();
+(function(){
+  var sp=document.getElementById("v11Splash");
+  if(state.settings.reducedMotion){if(sp)sp.remove();}
+  else if(sp){setTimeout(function(){sp.classList.add("out");setTimeout(function(){if(sp.parentNode)sp.remove();},380);},850);}
+  setTimeout(function(){if(!state.sessionUserId||!currentUser())showLogin();},state.settings.reducedMotion?50:900);
+})();
+})();
+</script>
+</body>
+</html>
