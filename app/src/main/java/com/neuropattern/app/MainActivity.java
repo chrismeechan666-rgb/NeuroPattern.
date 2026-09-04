@@ -5,7 +5,7 @@ import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-
+import android.webkit.WebChromeClient;
 public class MainActivity extends Activity {
 
     private WebView webView;
@@ -22,7 +22,7 @@ protected void onCreate(Bundle savedInstanceState) {
     settings.setDomStorageEnabled(true);
 
     webView.setWebViewClient(new WebViewClient());
-
+webView.setWebChromeClient(new WebChromeClient());
     
 
     new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
