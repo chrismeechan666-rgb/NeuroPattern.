@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Java
@@ -23,7 +23,7 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK packages
+      - name: Install Android SDK
         run: |
           sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
@@ -45,8 +45,8 @@ jobs:
       - name: Align APK
         run: |
           $ANDROID_HOME/build-tools/35.0.0/zipalign -v -p 4 \
-          app/build/outputs/apk/release/app-release-unsigned.apk \
-          NeuroPattern.apk
+            app/build/outputs/apk/release/app-release-unsigned.apk \
+            NeuroPattern.apk
 
       - name: Sign APK
         env:
@@ -55,16 +55,19 @@ jobs:
           KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
         run: |
           $ANDROID_HOME/build-tools/35.0.0/apksigner sign \
-          --ks neuropattern-release.jks \
-          --ks-pass env:KEYSTORE_PASSWORD \
-          --key-pass env:KEY_PASSWORD \
-          --ks-key-alias "$KEYSTORE_ALIAS" \
-          NeuroPattern.apk
+            --ks neuropattern-release.jks \
+            --ks-pass env:KEYSTORE_PASSWORD \
+            --key-pass env:KEY_PASSWORD \
+            --ks-key-alias "$KEYSTORE_ALIAS" \
+            NeuroPattern.apk
 
       - name: Verify APK
         run: |
-          $ANDROID_HOME/build-tools/35.0.0/apksigner verify \
-          --verbose NeuroPattern.apk
+          $ANDROID_HOME/build-tools/35.0.0/apksigner verify --verbose NeuroPattern.apk
+
+      - name: Prepare Android App Bundle
+        run: |
+          cp app/build/outputs/bundle/release/app-release.aab NeuroPattern.aab
 
       - name: Sign Android App Bundle
         env:
@@ -72,18 +75,16 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
         run: |
-          cp app/build/outputs/bundle/release/app-release.aab NeuroPattern.aab
-
           jarsigner \
-          -keystore neuropattern-release.jks \
-          -storepass "$KEYSTORE_PASSWORD" \
-          -keypass "$KEY_PASSWORD" \
-          NeuroPattern.aab \
-          "$KEYSTORE_ALIAS"
+            -keystore neuropattern-release.jks \
+            -storepass "$KEYSTORE_PASSWORD" \
+            -keypass "$KEY_PASSWORD" \
+            NeuroPattern.aab \
+            "$KEYSTORE_ALIAS"
 
       - name: Verify Android App Bundle
         run: |
-          jarsigner -verify -verbose -certs NeuroPattern.aab
+          jarsigner -verify NeuroPattern.aab
 
       - name: Upload NeuroPattern APK
         uses: actions/upload-artifact@v4
@@ -95,38 +96,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: NeuroPattern-AAB
-          path: NeuroPattern.aab          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        run: |
-          echo "$KEYSTORE_BASE64" | base64 --decode > neuropattern-release.jks
-
-      - name: Build release APK
-        run: gradle assembleRelease
-
-      - name: Align APK
-        run: |
-          $ANDROID_HOME/build-tools/35.0.0/zipalign -v -p 4 \
-          app/build/outputs/apk/release/app-release-unsigned.apk \
-          NeuroPattern.apk
-
-      - name: Sign APK
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
-        run: |
-          $ANDROID_HOME/build-tools/35.0.0/apksigner sign \
-          --ks neuropattern-release.jks \
-          --ks-pass env:KEYSTORE_PASSWORD \
-          --key-pass env:KEY_PASSWORD \
-          --ks-key-alias "$KEYSTORE_ALIAS" \
-          NeuroPattern.apk
-
-      - name: Verify APK signature
-        run: |
-          $ANDROID_HOME/build-tools/35.0.0/apksigner verify --verbose NeuroPattern.apk
-
-      - name: Upload NeuroPattern APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: NeuroPattern-APK
-          path: NeuroPattern.apk
+          path: NeuroPattern.aab
