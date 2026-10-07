@@ -83,6 +83,8 @@ textarea{min-height:78px;resize:vertical}.row{display:flex;gap:7px;flex-wrap:wra
 .logStepBar::-webkit-scrollbar{display:none}
 .logStep{flex:0 0 auto;border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:999px;padding:8px 11px;font-size:12px;font-weight:850}
 .logStep.active{background:var(--teal);border-color:var(--teal);color:#fff}
+.logStep{font-family:inherit;cursor:pointer;white-space:nowrap}
+.logStepAnchor{height:1px;scroll-margin-top:150px}
 .logTip{display:flex;gap:10px;align-items:flex-start;background:var(--teal2);border:1px solid rgba(23,107,104,.18);border-radius:16px;padding:11px 13px;margin-bottom:12px;color:var(--ink);font-size:13px;line-height:1.35}
 .logTip b{color:var(--teal)}
 body.dark #logForm .formSection,body.dark .logStep{background:var(--card)}
@@ -684,9 +686,10 @@ function logView(){
   var faces=["●","◔","◡","◠","●"], labels=["Calm","Mild","Moderate","High","Aggressive"];
   return v8Header()+
   '<div class="logIntro"><h1>'+(er?'Edit behaviour / incident':'Behaviour / incident record')+'</h1><p>A clear, factual record of presentation, context, support and outcome.</p></div>'+
-  '<div class="logStepBar"><span class="logStep active">1 · What happened</span><span class="logStep">2 · Context</span><span class="logStep">3 · Support</span><span class="logStep">4 · Review</span></div>'+
+  '<div class="logStepBar"><button type="button" class="logStep active" data-log-step="what">1 · What happened</button><button type="button" class="logStep" data-log-step="context">2 · Context</button><button type="button" class="logStep" data-log-step="support">3 · Support</button><button type="button" class="logStep" data-log-step="review">4 · Review</button></div>'+
   '<div class="logTip"><span>✓</span><div><b>Keep it factual.</b> Record what was observed, what happened around it and the response. Optional fields can be left blank when not known.</div></div>'+
   '<form id="logForm">'+
+    '<div id="logStepWhat" class="logStepAnchor"></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Entry type</h3></div></div>'+
       '<input type="hidden" name="type" id="entryTypeValue" value="'+esc(er&&er.type?er.type:"Observation")+'">'+
       '<div class="choiceGrid"><button type="button" class="choiceCard entryChoice '+((!er||er.type==="Observation")?"on":"")+'" data-entry-choice="Observation">Observation</button><button type="button" class="choiceCard entryChoice '+(er&&er.type==="Incident"?"on":"")+'" data-entry-choice="Incident">Incident</button><button type="button" class="choiceCard entryChoice '+(er&&er.type==="Other"?"on":"")+'" data-entry-choice="Other">Other</button></div>'+
@@ -696,11 +699,13 @@ function logView(){
       '<div class="intensityGrid">'+faces.map(function(face,i){return '<button type="button" class="intensityCard '+((er?Number(er.level):0)===i?"on":"")+'" data-intensity="'+i+'"><span class="face">'+face+'</span><b>'+i+'</b><small>'+labels[i]+'</small></button>';}).join("")+'</div>'+
     '</div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Behaviour</h3><p>Select all that apply.</p></div><button type="button" class="clearMini" data-clear-chips="behaviours">Clear all</button></div><div class="logPills">'+chips("behaviours",behaviours)+'</div></div>'+
+    '<div id="logStepContext" class="logStepAnchor"></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Context / possible factors</h3><p>Select anything recorded around the event. This does not imply causation.</p></div><button type="button" class="clearMini" data-clear-chips="triggers">Clear all</button></div><div class="logPills">'+chips("triggers",triggers)+'</div></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Early warning signs</h3><p>Record observable changes only — select all that apply.</p></div><button type="button" class="clearMini" data-clear-chips="warningSigns">Clear all</button></div><div class="logPills">'+chips("warningSigns",warningSigns)+'</div></div>'+
     '<div class="formSection grid2"><div><div class="formSectionHead"><div><h3>Escalation</h3><p>How quickly did the presentation change?</p></div></div><select name="escalationRate">'+escalationRates.map(function(x){return '<option>'+esc(x)+'</option>';}).join("")+'</select></div><div><div class="formSectionHead"><div><h3>Recovery</h3><p>Presentation after support / time.</p></div></div><select name="recoveryState">'+recoveryStates.map(function(x){return '<option>'+esc(x)+'</option>';}).join("")+'</select></div></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>What happened immediately before?</h3></div></div><div class="counterWrap"><textarea class="logTextarea" maxlength="500" name="antecedent" placeholder="e.g. asked to get dressed, told no, waiting for activity..."></textarea><span class="charCount" data-count-for="antecedent">0/500</span></div></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>What happened immediately after?</h3><p>Consequence / response / recovery.</p></div></div><div class="counterWrap"><textarea class="logTextarea" maxlength="500" name="consequence" placeholder="e.g. calmed after 10 minutes, offered drink, went to quiet room..."></textarea><span class="charCount" data-count-for="consequence">0/500</span></div></div>'+
+    '<div id="logStepSupport" class="logStepAnchor"></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Intervention / de-escalation</h3><p>Select all that apply.</p></div><button type="button" class="clearMini" data-clear-chips="interventions">Clear all</button></div><div class="logPills">'+chips("interventions",interventions)+'</div></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Outcome</h3></div></div><select name="outcome"><option>Not known</option><option>Much calmer</option><option>Somewhat calmer</option><option>No change</option><option>More agitated</option></select></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Safety / associated events</h3><p>Mark only what was actually recorded.</p></div></div><div class="factorGrid"><label class="factorCheck"><input type="checkbox" name="injury"> Injury</label><label class="factorCheck"><input type="checkbox" name="damage"> Property damage</label><label class="factorCheck"><input type="checkbox" name="restrictive"> Restrictive intervention</label></div></div>'+
@@ -709,6 +714,7 @@ function logView(){
     '<div class="formSection"><div class="formSectionHead"><div><h3>Recovery time (minutes)</h3><p>Optional — time until the person returned towards their usual presentation.</p></div></div><input class="inp" type="number" min="0" name="recoveryMinutes" placeholder="Optional"></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Staff reflection</h3><p>Optional: could anything be approached differently next time?</p></div></div><div class="counterWrap"><textarea class="logTextarea" maxlength="500" name="staffReflection" placeholder="Factual reflection for future support..."></textarea><span class="charCount" data-count-for="staffReflection">0/500</span></div></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Additional factual notes</h3></div></div><div class="counterWrap"><textarea class="logTextarea" maxlength="500" name="notes" placeholder="Add any relevant details (optional)..."></textarea><span class="charCount" data-count-for="notes">0/500</span></div></div>'+
+    '<div id="logStepReview" class="logStepAnchor"></div>'+
     '<div class="reviewBox"><b>Ready to save ✓</b><span>Check the record is factual and accurate, then save.</span></div>'+
     '<div class="saveBar"><button class="primarySave">'+(er?'Save changes':'Save record')+'</button>'+(er?'<button type="button" id="cancelEditBtn" class="cancelEdit">Cancel editing</button>':'')+'</div>'+
   '</form>';
@@ -828,7 +834,7 @@ function settingsView(){
     (state.settings.pinEnabled?'<button class="btn secondary" id="lockNowBtn">Lock now</button><button class="btn secondary" id="disablePinBtn">Disable PIN</button>':'')+
   '</div></div>'+
   '<div class="card"><div class="settingsGroup"><h3>Demo mode</h3><div class="settingsRow"><div class="copy"><b>Fictional demonstration data</b><small>Useful for screenshots, training and promotion without using a real person’s information.</small></div><button class="btn secondary" id="demoBtn">'+(state.settings.demoMode?'Clear demo':'Load demo')+'</button></div></div></div>'+
-  '<div class="card"><div class="settingsGroup"><h3>Release information</h3><div class="aboutGrid"><div class="card"><b>V13.0.1</b><span class="tiny">app version</span></div><div class="card"><b>Local</b><span class="tiny">data storage</span></div></div><div class="p">NeuroPattern is designed for structured recording and pattern review. This build remains a local-device release candidate, not a managed clinical records system.</div></div></div>'+
+  '<div class="card"><div class="settingsGroup"><h3>Release information</h3><div class="aboutGrid"><div class="card"><b>V13.2</b><span class="tiny">app version</span></div><div class="card"><b>Local</b><span class="tiny">data storage</span></div></div><div class="p">NeuroPattern is designed for structured recording and pattern review. This build remains a local-device release candidate, not a managed clinical records system.</div></div></div>'+
 
   '<div class="card"><div class="settingsGroup"><h3>Staff accounts</h3><div class="p">Local staff logins automatically attribute records to the signed-in user.</div>'+
   (canManageUsers()?'<form id="addStaffForm"><div class="grid2"><div class="field"><div class="label">Name</div><input class="inp" name="name" required></div><div class="field"><div class="label">Initials / ID</div><input class="inp" name="initials" maxlength="8" required></div></div><div class="grid2"><div class="field"><div class="label">PIN</div><input class="inp" name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,6}" required></div><div class="field"><div class="label">Role</div><select name="role"><option>Staff</option><option>Senior/Manager</option><option>Admin</option></select></div></div><button class="btn secondary">Add staff account</button></form>':'<div class="muted">Only an Admin can add or disable staff accounts.</div>')+
@@ -1167,6 +1173,12 @@ function bind(){
   Array.prototype.forEach.call(document.querySelectorAll("[data-quick]"),function(b){b.onclick=function(){draftLevel=Number(b.dataset.quick);current="log";render();};});
   Array.prototype.forEach.call(document.querySelectorAll(".chips .chip"),function(b){b.onclick=function(){b.classList.toggle("on");};});
 
+  var logStepMap={what:"logStepWhat",context:"logStepContext",support:"logStepSupport",review:"logStepReview"};
+  Array.prototype.forEach.call(document.querySelectorAll("[data-log-step]"),function(b){b.onclick=function(){
+    var id=logStepMap[b.dataset.logStep],el=id?document.getElementById(id):null;if(!el)return;
+    document.querySelectorAll("[data-log-step]").forEach(function(x){x.classList.toggle("active",x===b);});
+    el.scrollIntoView({behavior:"smooth",block:"start"});
+  };});
   Array.prototype.forEach.call(document.querySelectorAll("[data-entry-choice]"),function(b){b.onclick=function(){
     var v=document.getElementById("entryTypeValue");if(v)v.value=b.dataset.entryChoice;
     document.querySelectorAll(".entryChoice").forEach(function(x){x.classList.toggle("on",x===b);});
