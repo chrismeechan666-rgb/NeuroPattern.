@@ -961,5 +961,52 @@ render();
 })();
 })();
 </script>
+  <style>
+/* Timeline filter polish */
+.timelineFilters{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  flex-wrap:nowrap;
+  padding:4px 1px 10px;
+  margin:8px 0 10px;
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+.timelineFilters::-webkit-scrollbar{
+  display:none;
+}
+.timelineFilters button{
+  flex:0 0 auto;
+  width:auto;
+  min-height:42px;
+  padding:9px 14px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:var(--card);
+  color:var(--ink);
+  font:inherit;
+  font-size:14px;
+  font-weight:750;
+  white-space:nowrap;
+  appearance:none;
+  -webkit-appearance:none;
+}
+.timelineFilters button.on{
+  background:var(--teal);
+  border-color:var(--teal);
+  color:#fff;
+}
+body.dark .timelineFilters button{
+  background:var(--surface2);
+  border-color:var(--line);
+  color:var(--ink);
+}
+body.dark .timelineFilters button.on{
+  background:var(--teal);
+  border-color:var(--teal);
+  color:#fff;
+}
+</style>
 </body>
 </html>
