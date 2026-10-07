@@ -725,7 +725,7 @@ function logView(){
 function timelineView(){
   var saveBanner=lastSaveNotice?'<div class="saveConfirmBanner" role="status"><span class="saveConfirmIcon">✓</span><div><b>'+esc(lastSaveNotice)+'</b><small>Saved successfully</small></div></div>':"";
   lastSaveNotice="";
-  var ev=mine().map(function(x){var y=Object.assign({},x);y.kind="beh";return saveBanner+y;})
+  var ev=mine().map(function(x){var y=Object.assign({},x);y.kind="beh";return y;})
   .concat(medsMine().map(function(x){var y=Object.assign({},x);y.kind="med";return y;}))
   .concat(state.handovers.filter(function(x){return x.person===state.active;}).map(function(x){var y=Object.assign({},x);y.kind="handover";return y;}))
   .sort(function(a,b){return new Date(b.ts)-new Date(a.ts);});
@@ -736,8 +736,8 @@ function timelineView(){
   });
   var head=v8Header()+'<h1 class="h1">Timeline</h1><div class="p">Scan behaviour, medication and handover entries in one chronological view.</div>'+
     '<div class="timelineFilters"><button data-tfilter="all" class="'+(timelineFilter==="all"?"on":"")+'">All</button><button data-tfilter="beh" class="'+(timelineFilter==="beh"?"on":"")+'">Behaviour</button><button data-tfilter="high" class="'+(timelineFilter==="high"?"on":"")+'">High intensity</button><button data-tfilter="med" class="'+(timelineFilter==="med"?"on":"")+'">Medication</button><button data-tfilter="handover" class="'+(timelineFilter==="handover"?"on":"")+'">Handover</button></div>';
-  if(!filtered.length)return head+card('<div class="empty">No matching entries yet.</div>');
-  return head+filtered.slice(0,150).map(function(x){
+  if(!filtered.length)return head+saveBanner+card('<div class="empty">No matching entries yet.</div>');
+  return head+saveBanner+filtered.slice(0,150).map(function(x){
     if(x.kind==="med")return '<div class="card event"><div class="eventHead"><div class="eventTitle">💊 '+esc(x.name)+'</div><div class="muted">'+new Date(x.ts).toLocaleString()+'</div></div><div class="p">'+esc(x.dose||"")+' • '+esc(x.type||"Regular")+'</div></div>';
     if(x.kind==="handover")return '<div class="card event amber"><div class="eventHead"><div class="eventTitle">📝 Handover</div><div class="muted">'+new Date(x.ts).toLocaleString()+'</div></div><div class="p">'+esc(x.note)+'</div></div>';
     return '<div class="card event '+(Number(x.level)>=3?"red":"")+'"><div class="eventHead"><div class="eventTitle">'+esc(x.type)+' • '+esc(levelName(x.level))+'</div><div class="muted">'+new Date(x.ts).toLocaleString()+'</div></div>'+
@@ -839,7 +839,7 @@ function settingsView(){
     (state.settings.pinEnabled?'<button class="btn secondary" id="lockNowBtn">Lock now</button><button class="btn secondary" id="disablePinBtn">Disable PIN</button>':'')+
   '</div></div>'+
   '<div class="card"><div class="settingsGroup"><h3>Demo mode</h3><div class="settingsRow"><div class="copy"><b>Fictional demonstration data</b><small>Useful for screenshots, training and promotion without using a real person’s information.</small></div><button class="btn secondary" id="demoBtn">'+(state.settings.demoMode?'Clear demo':'Load demo')+'</button></div></div></div>'+
-  '<div class="card"><div class="settingsGroup"><h3>Release information</h3><div class="aboutGrid"><div class="card"><b>V13.5</b><span class="tiny">app version</span></div><div class="card"><b>Local</b><span class="tiny">data storage</span></div></div><div class="p">NeuroPattern is designed for structured recording and pattern review. This build remains a local-device release candidate, not a managed clinical records system.</div></div></div>'+
+  '<div class="card"><div class="settingsGroup"><h3>Release information</h3><div class="aboutGrid"><div class="card"><b>V13.6</b><span class="tiny">app version</span></div><div class="card"><b>Local</b><span class="tiny">data storage</span></div></div><div class="p">NeuroPattern is designed for structured recording and pattern review. This build remains a local-device release candidate, not a managed clinical records system.</div></div></div>'+
 
   '<div class="card"><div class="settingsGroup"><h3>Staff accounts</h3><div class="p">Local staff logins automatically attribute records to the signed-in user.</div>'+
   (canManageUsers()?'<form id="addStaffForm"><div class="grid2"><div class="field"><div class="label">Name</div><input class="inp" name="name" required></div><div class="field"><div class="label">Initials / ID</div><input class="inp" name="initials" maxlength="8" required></div></div><div class="grid2"><div class="field"><div class="label">PIN</div><input class="inp" name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,6}" required></div><div class="field"><div class="label">Role</div><select name="role"><option>Staff</option><option>Senior/Manager</option><option>Admin</option></select></div></div><button class="btn secondary">Add staff account</button></form>':'<div class="muted">Only an Admin can add or disable staff accounts.</div>')+
