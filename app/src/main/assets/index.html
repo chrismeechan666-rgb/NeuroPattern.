@@ -50,6 +50,53 @@ textarea{min-height:78px;resize:vertical}.row{display:flex;gap:7px;flex-wrap:wra
 .insightStrong{font-weight:850;color:var(--ink)}.score{display:inline-block;border-radius:999px;background:var(--teal2);color:var(--teal);font-weight:900;padding:4px 8px;font-size:11px}
 
 @media(max-width:420px){.brand{font-size:25px}.tabs{top:74px}.page{padding-left:14px;padding-right:14px}.quickState{gap:4px}.quickState button{font-size:10px;padding:8px 2px}}
+
+/* === V13.1 Log workflow polish === */
+.logIntro{margin:8px 0 14px}.logIntro h1{margin-bottom:4px}.logIntro p{margin:0;color:var(--muted)}
+#logForm{display:grid;gap:12px;padding-bottom:118px}
+#logForm .formSection{margin:0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 5px 18px rgba(23,63,68,.035)}
+#logForm .formSectionHead{margin-bottom:11px;gap:10px}
+#logForm .formSectionHead h3{font-size:17px;line-height:1.2;margin:0;color:var(--ink)}
+#logForm .formSectionHead p{font-size:13px;line-height:1.35;margin:4px 0 0;color:var(--muted)}
+#logForm .choiceGrid{gap:8px}
+#logForm .choiceCard{min-height:48px;border-radius:14px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font-weight:850;transition:.16s ease}
+#logForm .choiceCard.on{background:var(--teal);border-color:var(--teal);color:#fff;box-shadow:0 5px 14px rgba(23,107,104,.18)}
+#logForm .intensityGrid{gap:7px}
+#logForm .intensityCard{min-width:0;border-radius:16px;padding:11px 5px 9px;transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease}
+#logForm .intensityCard:active{transform:scale(.97)}
+#logForm .intensityCard .face{font-size:20px}
+#logForm .intensityCard b{font-size:16px}
+#logForm .intensityCard small{font-size:10px}
+#logForm .logPills{display:flex;gap:8px;overflow-x:auto;flex-wrap:nowrap;padding:2px 1px 7px;scrollbar-width:none}
+#logForm .logPills::-webkit-scrollbar{display:none}
+#logForm .logPills label,#logForm .logPills .chip{flex:0 0 auto}
+#logForm textarea.logTextarea{min-height:88px;border-radius:14px;resize:vertical}
+#logForm select,#logForm .inp{border-radius:14px;min-height:48px}
+#logForm .clearMini{border:0;background:var(--teal2);color:var(--teal);border-radius:999px;padding:7px 10px;font-size:11px;font-weight:900;white-space:nowrap}
+#logForm .factorGrid{gap:8px}
+#logForm .factorCheck{border:1px solid var(--line);border-radius:14px;background:var(--surface2);padding:11px}
+#logForm .reviewBox{border:1px solid rgba(23,107,104,.24);background:var(--teal2);border-radius:18px;padding:14px 16px}
+#logForm .reviewBox b{display:block;color:var(--teal);margin-bottom:3px}
+#logForm .saveBar{position:sticky;bottom:calc(8px + env(safe-area-inset-bottom));z-index:30;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:22px;padding:8px;box-shadow:0 12px 32px rgba(0,0,0,.13)}
+#logForm .primarySave{min-height:56px;border-radius:17px;font-size:17px}
+.logStepBar{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin:0 0 12px;padding:2px 0 5px}
+.logStepBar::-webkit-scrollbar{display:none}
+.logStep{flex:0 0 auto;border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:999px;padding:8px 11px;font-size:12px;font-weight:850}
+.logStep.active{background:var(--teal);border-color:var(--teal);color:#fff}
+.logTip{display:flex;gap:10px;align-items:flex-start;background:var(--teal2);border:1px solid rgba(23,107,104,.18);border-radius:16px;padding:11px 13px;margin-bottom:12px;color:var(--ink);font-size:13px;line-height:1.35}
+.logTip b{color:var(--teal)}
+body.dark #logForm .formSection,body.dark .logStep{background:var(--card)}
+body.dark #logForm .choiceCard,body.dark #logForm .factorCheck{background:#183034}
+body.dark #logForm .reviewBox,body.dark .logTip{background:#173b3a}
+body.dark #logForm .saveBar{background:rgba(15,29,32,.90)}
+@media(max-width:520px){
+  #logForm .formSection{padding:14px;border-radius:18px}
+  #logForm .grid2{grid-template-columns:1fr}
+  #logForm .intensityGrid{gap:5px}
+  #logForm .intensityCard{padding:10px 3px 8px}
+  #logForm .intensityCard small{font-size:9px}
+}
+
 </style>
 
 <style id="v8-polish">
@@ -636,7 +683,9 @@ function logView(){
   var er=editingId?state.logs.find(function(x){return x.id===editingId;}):null;
   var faces=["●","◔","◡","◠","●"], labels=["Calm","Mild","Moderate","High","Aggressive"];
   return v8Header()+
-  '<div class="logIntro"><h1>'+(er?'Edit behaviour / incident':'Behaviour / incident record')+'</h1><p>Record what happened, when and the surrounding information.</p></div>'+
+  '<div class="logIntro"><h1>'+(er?'Edit behaviour / incident':'Behaviour / incident record')+'</h1><p>A clear, factual record of presentation, context, support and outcome.</p></div>'+
+  '<div class="logStepBar"><span class="logStep active">1 · What happened</span><span class="logStep">2 · Context</span><span class="logStep">3 · Support</span><span class="logStep">4 · Review</span></div>'+
+  '<div class="logTip"><span>✓</span><div><b>Keep it factual.</b> Record what was observed, what happened around it and the response. Optional fields can be left blank when not known.</div></div>'+
   '<form id="logForm">'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Entry type</h3></div></div>'+
       '<input type="hidden" name="type" id="entryTypeValue" value="'+esc(er&&er.type?er.type:"Observation")+'">'+
@@ -647,20 +696,20 @@ function logView(){
       '<div class="intensityGrid">'+faces.map(function(face,i){return '<button type="button" class="intensityCard '+((er?Number(er.level):0)===i?"on":"")+'" data-intensity="'+i+'"><span class="face">'+face+'</span><b>'+i+'</b><small>'+labels[i]+'</small></button>';}).join("")+'</div>'+
     '</div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Behaviour</h3><p>Select all that apply.</p></div><button type="button" class="clearMini" data-clear-chips="behaviours">Clear all</button></div><div class="logPills">'+chips("behaviours",behaviours)+'</div></div>'+
-    '<div class="formSection"><div class="formSectionHead"><div><h3>Possible factors / antecedents</h3><p>Select all that apply.</p></div><button type="button" class="clearMini" data-clear-chips="triggers">Clear all</button></div><div class="logPills">'+chips("triggers",triggers)+'</div></div>'+
+    '<div class="formSection"><div class="formSectionHead"><div><h3>Context / possible factors</h3><p>Select anything recorded around the event. This does not imply causation.</p></div><button type="button" class="clearMini" data-clear-chips="triggers">Clear all</button></div><div class="logPills">'+chips("triggers",triggers)+'</div></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Early warning signs</h3><p>Record observable changes only — select all that apply.</p></div><button type="button" class="clearMini" data-clear-chips="warningSigns">Clear all</button></div><div class="logPills">'+chips("warningSigns",warningSigns)+'</div></div>'+
     '<div class="formSection grid2"><div><div class="formSectionHead"><div><h3>Escalation</h3><p>How quickly did the presentation change?</p></div></div><select name="escalationRate">'+escalationRates.map(function(x){return '<option>'+esc(x)+'</option>';}).join("")+'</select></div><div><div class="formSectionHead"><div><h3>Recovery</h3><p>Presentation after support / time.</p></div></div><select name="recoveryState">'+recoveryStates.map(function(x){return '<option>'+esc(x)+'</option>';}).join("")+'</select></div></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>What happened immediately before?</h3></div></div><div class="counterWrap"><textarea class="logTextarea" maxlength="500" name="antecedent" placeholder="e.g. asked to get dressed, told no, waiting for activity..."></textarea><span class="charCount" data-count-for="antecedent">0/500</span></div></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>What happened immediately after?</h3><p>Consequence / response / recovery.</p></div></div><div class="counterWrap"><textarea class="logTextarea" maxlength="500" name="consequence" placeholder="e.g. calmed after 10 minutes, offered drink, went to quiet room..."></textarea><span class="charCount" data-count-for="consequence">0/500</span></div></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Intervention / de-escalation</h3><p>Select all that apply.</p></div><button type="button" class="clearMini" data-clear-chips="interventions">Clear all</button></div><div class="logPills">'+chips("interventions",interventions)+'</div></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Outcome</h3></div></div><select name="outcome"><option>Not known</option><option>Much calmer</option><option>Somewhat calmer</option><option>No change</option><option>More agitated</option></select></div>'+
-    '<div class="formSection"><div class="formSectionHead"><div><h3>Associated factors</h3><p>Select all that apply.</p></div></div><div class="factorGrid"><label class="factorCheck"><input type="checkbox" name="injury"> Injury</label><label class="factorCheck"><input type="checkbox" name="damage"> Property damage</label><label class="factorCheck"><input type="checkbox" name="restrictive"> Restrictive intervention</label></div></div>'+
+    '<div class="formSection"><div class="formSectionHead"><div><h3>Safety / associated events</h3><p>Mark only what was actually recorded.</p></div></div><div class="factorGrid"><label class="factorCheck"><input type="checkbox" name="injury"> Injury</label><label class="factorCheck"><input type="checkbox" name="damage"> Property damage</label><label class="factorCheck"><input type="checkbox" name="restrictive"> Restrictive intervention</label></div></div>'+
     '<div class="formSection grid2"><div><div class="formSectionHead"><div><h3>Duration (minutes)</h3></div></div><div class="stepField"><input class="inp" id="durationInput" type="number" min="0" name="duration" placeholder="Optional"><button type="button" class="stepBtn" data-step-target="durationInput" data-step="-1">−</button><button type="button" class="stepBtn" data-step-target="durationInput" data-step="1">+</button></div></div><div><div class="formSectionHead"><div><h3>Pain (0–10)</h3></div></div><div class="stepField"><input class="inp" id="painInput" type="number" min="0" max="10" name="pain" value="0"><button type="button" class="stepBtn" data-step-target="painInput" data-step="-1">−</button><button type="button" class="stepBtn" data-step-target="painInput" data-step="1">+</button></div></div></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Sleep (last night)</h3></div></div><select name="sleep"><option>Unknown</option><option>Good</option><option>Interrupted</option><option>Poor</option></select></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Recovery time (minutes)</h3><p>Optional — time until the person returned towards their usual presentation.</p></div></div><input class="inp" type="number" min="0" name="recoveryMinutes" placeholder="Optional"></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Staff reflection</h3><p>Optional: could anything be approached differently next time?</p></div></div><div class="counterWrap"><textarea class="logTextarea" maxlength="500" name="staffReflection" placeholder="Factual reflection for future support..."></textarea><span class="charCount" data-count-for="staffReflection">0/500</span></div></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Additional factual notes</h3></div></div><div class="counterWrap"><textarea class="logTextarea" maxlength="500" name="notes" placeholder="Add any relevant details (optional)..."></textarea><span class="charCount" data-count-for="notes">0/500</span></div></div>'+
-    '<div class="reviewBox"><b>Ready to save</b><span>Review the record for accuracy before saving.</span></div>'+
+    '<div class="reviewBox"><b>Ready to save ✓</b><span>Check the record is factual and accurate, then save.</span></div>'+
     '<div class="saveBar"><button class="primarySave">'+(er?'Save changes':'Save record')+'</button>'+(er?'<button type="button" id="cancelEditBtn" class="cancelEdit">Cancel editing</button>':'')+'</div>'+
   '</form>';
 }
