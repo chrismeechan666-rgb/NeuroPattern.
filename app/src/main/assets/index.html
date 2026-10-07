@@ -1016,5 +1016,242 @@ body.dark .timelineFilters button.on{
   display:none !important;
 }
 </style>
+  <style id="v13-home-polish">
+/* =========================================
+   NeuroPattern v13 - Home UI polish
+   ========================================= */
+
+/* Give pages enough breathing room above Android/nav controls */
+.page{
+  padding-bottom:110px;
+}
+
+/* ---------- HOME HERO ---------- */
+.homeHero{
+  margin-bottom:12px;
+}
+
+.homeHero h1{
+  margin-bottom:3px;
+}
+
+/* ---------- TODAY / OVERVIEW STATS ---------- */
+.todaysStrip{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  margin:12px 0 14px;
+}
+
+.todaysStrip > *{
+  min-width:0;
+  border:1px solid var(--line);
+  background:var(--surface2);
+  border-radius:14px;
+  padding:11px 8px;
+  text-align:center;
+}
+
+.todaysStrip b,
+.todaysStrip strong{
+  display:block;
+  font-size:20px;
+  line-height:1.1;
+  margin-bottom:4px;
+}
+
+.todaysStrip small{
+  display:block;
+  line-height:1.2;
+}
+
+/* ---------- CURRENT STATE ---------- */
+.statusPanel{
+  border:1px solid var(--line);
+  background:var(--surface);
+  border-radius:16px;
+  padding:13px;
+  margin-bottom:14px;
+}
+
+.statusPanel h3{
+  margin-top:0;
+  margin-bottom:10px;
+}
+
+.statusRow{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:6px;
+}
+
+.statusBtn{
+  min-width:0;
+  min-height:64px;
+  padding:8px 3px;
+  border-radius:12px;
+  transition:transform .12s ease,filter .12s ease;
+}
+
+.statusBtn:active{
+  transform:scale(.96);
+  filter:brightness(.94);
+}
+
+/* ---------- PRIMARY HOME ACTIONS ---------- */
+.homeActions{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  margin:14px 0 16px;
+}
+
+.homeAction{
+  min-width:0;
+  min-height:92px;
+  padding:12px 8px;
+  border-radius:15px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+  text-align:left;
+  overflow:hidden;
+}
+
+.homeAction b,
+.homeAction strong{
+  display:block;
+  width:100%;
+  font-size:13px;
+  line-height:1.2;
+  overflow-wrap:anywhere;
+}
+
+.homeAction small{
+  display:block;
+  width:100%;
+  margin-top:4px;
+  font-size:10px;
+  line-height:1.25;
+  overflow-wrap:anywhere;
+}
+
+/* ---------- EARLY WARNING ---------- */
+.earlyHome{
+  clear:both;
+  margin:6px 0 14px;
+  padding:14px;
+  border-radius:16px;
+}
+
+.earlyHome h3{
+  margin-top:0;
+}
+
+/* ---------- GLANCE CARDS ---------- */
+.glanceGrid{
+  gap:8px;
+  margin:14px 0;
+}
+
+.glanceCard{
+  min-width:0;
+  border-radius:14px;
+}
+
+/* ---------- PATTERN / RECENT ---------- */
+.patternHome{
+  margin:14px 0;
+  border-radius:16px;
+}
+
+.homeSectionTitle{
+  margin-top:18px;
+}
+
+.recentSimple{
+  border-radius:14px;
+}
+
+/* ---------- FLOATING + RECORD ---------- */
+/* Keep it clear of Home action cards and Android navigation */
+.quickRecord{
+  position:fixed;
+  right:16px !important;
+  bottom:calc(18px + env(safe-area-inset-bottom)) !important;
+  z-index:35;
+  min-height:50px;
+  padding:0 17px;
+  border-radius:999px;
+  box-shadow:0 7px 22px rgba(0,0,0,.22);
+}
+
+/* Existing menu becomes a cleaner action sheet */
+.recordMenu{
+  position:fixed;
+  left:12px !important;
+  right:12px !important;
+  width:auto !important;
+  bottom:calc(78px + env(safe-area-inset-bottom)) !important;
+  z-index:40;
+  padding:10px;
+  border-radius:18px;
+  box-shadow:0 12px 34px rgba(0,0,0,.25);
+}
+
+.recordMenu.open{
+  display:grid;
+  gap:7px;
+}
+
+.recordMenu button{
+  width:100%;
+  min-height:48px;
+  text-align:left;
+  border-radius:12px;
+  padding:10px 13px;
+}
+
+/* ---------- DARK MODE ---------- */
+body.dark .statusPanel,
+body.dark .todaysStrip > *{
+  border-color:var(--line);
+}
+
+/* ---------- SMALL PHONES ---------- */
+@media(max-width:390px){
+  .homeActions{
+    gap:6px;
+  }
+
+  .homeAction{
+    padding:10px 6px;
+  }
+
+  .statusRow{
+    gap:4px;
+  }
+
+  .statusBtn{
+    padding-left:2px;
+    padding-right:2px;
+  }
+
+  .quickRecord{
+    right:12px !important;
+  }
+}
+
+@media(max-width:350px){
+  .homeActions{
+    grid-template-columns:1fr;
+  }
+
+  .homeAction{
+    min-height:68px;
+  }
+}
+  </style>
 </body>
 </html>
