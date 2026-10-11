@@ -305,7 +305,11 @@ details.v125Details{border:1px solid var(--line);background:var(--surface);borde
 @media(max-width:380px){.personBtns .miniBtn:first-child{display:none}.quickRecord{right:12px}}
 </style>
 <style id="v127">
-.page{padding-bottom:118px!important}.v125Top{position:relative!important;padding:2px 0 5px!important}.personStrip{padding:7px 9px!important}.personStrip .who{display:none}.personBtns{width:100%}.personSelect{flex:1;min-height:42px!important}.miniBtn{min-height:42px!important}.sessionBar{padding:7px 9px!important;margin:5px 0 9px!important}.todayStrip{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important;margin:8px 0 12px!important}.todayMini{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:9px 5px;text-align:center}.todayMini b{display:block;font-size:19px}.todayMini small{display:block;font-size:9px;color:var(--muted)}.quickRecord{left:auto!important;right:14px!important;bottom:calc(14px + env(safe-area-inset-bottom))!important;width:auto!important;min-height:52px!important;padding:0 17px!important;border-radius:999px!important;font-size:15px!important}.recordMenu{left:12px!important;right:12px!important;width:auto!important;bottom:calc(76px + env(safe-area-inset-bottom))!important}.handoverHero{border:1px solid #b9ded8;background:linear-gradient(145deg,var(--teal2),var(--surface));border-radius:17px;padding:13px;margin:11px 0}.handoverHero h3{margin:0 0 5px}.handoverHero p{margin:0;color:var(--muted);font-size:12px}.handoverStats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}.handoverStat{border:1px solid var(--line);background:var(--surface);border-radius:11px;padding:8px 4px;text-align:center}.handoverStat b{display:block;font-size:17px}.handoverStat small{font-size:8px;color:var(--muted)}.duplicateBtn{color:var(--teal)!important;background:var(--teal2)!important}.savedToast{bottom:calc(78px + env(safe-area-inset-bottom))!important}@media(max-width:390px){.supportShortcutText{display:none}.handoverStats{grid-template-columns:1fr 1fr}}
+.page{padding-bottom:118px!important}.v125Top{position:relative!important;padding:2px 0 5px!important}.personStrip{padding:7px 9px!important}.personStrip .who{display:none}.personBtns{width:100%}.personSelect{flex:1;min-height:42px!important}.miniBtn{min-height:42px!important}.sessionBar{padding:7px 9px!important;margin:5px 0 9px!important}.todayStrip{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important;margin:8px 0 12px!important}.todayMini{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:9px 5px;text-align:center}.todayMini b{display:block;font-size:19px}.todayMini small{display:block;font-size:9px;color:var(--muted)}.quickRecord{left:auto!important;right:14px!important;bottom:calc(14px + env(safe-area-inset-bottom))!important;width:auto!important;min-height:52px!important;padding:0 17px!important;border-radius:999px!important;font-size:15px!important}.recordMenu{left:12px!important;right:12px!important;width:auto!important;bottom:calc(76px + env(safe-area-inset-bottom))!important}.handoverHero{border:1px solid #b9ded8;background:linear-gradient(145deg,var(--teal2),var(--surface));border-radius:17px;padding:13px;margin:11px 0}.handoverHero h3{margin:0 0 5px}.handoverHero p{margin:0;color:var(--muted);font-size:12px}.handoverStats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}.handoverStat{border:1px solid var(--line);background:var(--surface);border-radius:11px;padding:8px 4px;text-align:center}.handoverStat b{display:block;font-size:17px}.handoverStat small{font-size:8px;color:var(--muted)}.duplicateBtn{color:var(--teal)!important;background:var(--teal2)!important}.savedToast{bottom:calc(78px + env(safe-area-inset-bottom))!important;display:flex;align-items:center;gap:9px;max-width:calc(100% - 32px);width:max-content;padding:12px 18px;font-size:13px;line-height:1.4;box-shadow:0 6px 20px #0003;pointer-events:none}
+.savedToast .toastIcon{font-size:19px;color:#b9f2df}
+body.dark .savedToast{background:#204f49;border:1px solid #428b7c;color:#f2fffa}
+.savedToast.error,body.dark .savedToast.error{background:#813838;color:white}
+.savedToast.error .toastIcon{color:white}@media(max-width:390px){.supportShortcutText{display:none}.handoverStats{grid-template-columns:1fr 1fr}}
 </style>
 <style id="v1271-record-cleanup">
 /* V12.7.1: restore the previous Record control and remove legacy Quick log/+ UI. */
@@ -927,7 +931,13 @@ function lastHandoverTime(){var hs=(state.handovers||[]).filter(function(h){retu
 function sinceLastHandover(){var cutoff=lastHandoverTime(),logs=mine().filter(function(x){return new Date(x.ts).getTime()>cutoff;}),meds=medsMine().filter(function(x){return new Date(x.ts).getTime()>cutoff;}),severe=logs.filter(function(x){return Number(x.level)>=3;}),risks=logs.filter(function(x){return x.injury||x.damage||x.restrictive;}),helpful={};logs.forEach(function(x){if(x.outcome==="Much calmer"||x.outcome==="Somewhat calmer")(x.interventions||[]).forEach(function(v){helpful[v]=(helpful[v]||0)+1;});});var best=topKeys(helpful,2);return {logs:logs,meds:meds,severe:severe,risks:risks,helpful:best.map(function(k){return k+" ("+helpful[k]+")";})};}
 function handoverSinceText(){var x=sinceLastHandover(),p=[x.logs.length+" behaviour/mood records",x.severe.length+" high-intensity",x.meds.length+" medication administrations"];if(x.risks.length)p.push(x.risks.length+" safety-flag records");if(x.helpful.length)p.push("approaches recorded alongside improvement: "+x.helpful.join(", "));return p.join(". ")+".";}
 function duplicateLog(id){var src=state.logs.find(function(x){return x.id===id;});if(!src)return;var d=new Date(),rec=JSON.parse(JSON.stringify(src));rec.id=newRecordId();rec.ts=d.toISOString();rec.date=d.toISOString().slice(0,10);rec.updatedTs="";rec.staff=staff()||"Not set";rec.quick=false;state.logs.push(rec);audit("DUPLICATE_BEHAVIOUR",rec.type+" • "+levelName(rec.level),rec.person);save();render();showSavedToast("Previous record duplicated ✓");}
-function showSavedToast(msg){var old=document.querySelector(".savedToast");if(old)old.remove();var d=document.createElement("div");d.className="savedToast";d.textContent=msg||"Saved ✓";document.body.appendChild(d);setTimeout(function(){if(d.parentNode)d.remove();},1800);}
+function showSavedToast(msg,error){
+  var old=document.querySelector(".savedToast");if(old)old.remove();
+  var d=document.createElement("div");d.className="savedToast"+(error?" error":"");d.setAttribute("role",error?"alert":"status");d.setAttribute("aria-live",error?"assertive":"polite");
+  var icon=document.createElement("span");icon.className="toastIcon";icon.setAttribute("aria-hidden","true");icon.textContent=error?"!":"✓";
+  var text=document.createElement("span");text.textContent=msg||"Saved";d.appendChild(icon);d.appendChild(text);document.body.appendChild(d);
+  setTimeout(function(){if(d.parentNode)d.remove();},error?7000:3000);
+}
 function handoverSummary(){
   var cutoff=Date.now()-12*3600000,l=mine().filter(function(x){return new Date(x.ts).getTime()>=cutoff;}),m=medsMine().filter(function(x){return new Date(x.ts).getTime()>=cutoff;}),sev=l.filter(function(x){return Number(x.level)>=3;});
   var pieces=["Last 12h: "+l.length+" behaviour/mood records",sev.length+" high-intensity",m.length+" medication administrations"];
@@ -1187,8 +1197,7 @@ function reportText(days){
   return t.join("\n");
 }
 function exportReportTxt(){
-  download("NeuroPattern_"+active().name.replace(/\W+/g,"_")+"_"+reportDays+"day_report.txt",reportText(reportDays),"text/plain");
-  audit("EXPORT_REPORT",reportDays+"-day text report");save();
+  download("NeuroPattern_"+active().name.replace(/\W+/g,"_").slice(0,80)+"_"+reportDays+"day_report.txt",reportText(reportDays),"text/plain","EXPORT_REPORT",reportDays+"-day text report");
 }
 function pendingPrn(){
   var prns=medsMine().filter(function(x){return x.type==="PRN";}).sort(function(a,b){return new Date(b.ts)-new Date(a.ts);});
@@ -1367,7 +1376,7 @@ function bind(){
       }
       audit(existing?"EDIT_BEHAVIOUR":"SAVE_BEHAVIOUR",rec.type+" • "+levelName(rec.level),rec.person);
       save();clearLogDraft(f);clearEditing();current="timeline";render();
-      alert(existing?"✓ Changes saved successfully":"✓ Record saved successfully");
+      showSavedToast("Record saved successfully");
     }catch(err){console.error("Record save failed",err);if(!err.neuropatternSaveReported)alert("Unable to save record: "+(err.message||String(err))+". Keep this form open and retry.");}finally{delete f.dataset.saving;}
   };
   var mf=document.getElementById("medForm");if(mf)mf.onsubmit=function(e){e.preventDefault();var fd=new FormData(mf);var med={id:String(Date.now()),person:state.active,name:fd.get("name"),dose:fd.get("dose"),schedule:fd.get("schedule"),kind:fd.get("kind")};state.meds.push(med);audit("ADD_MEDICATION",med.name);save(mf);render();};
@@ -1394,13 +1403,47 @@ function bind(){
   var cb=document.getElementById("csvBtn");if(cb)cb.onclick=exportCSV;
   var ib=document.getElementById("importBtn"), fi=document.getElementById("importFile");if(ib&&fi){ib.onclick=function(){fi.click();};fi.onchange=importJSON;}
 }
-function download(name,text,type){var blob=new Blob([text],{type:type}),u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},1000);}
-function exportJSON(){audit("EXPORT_BACKUP","Full JSON backup");save();download("NeuroPattern-backup.json",JSON.stringify(state,null,2),"application/json");}
-function exportCSV(){audit("EXPORT_CSV","Behaviour CSV");save();
+var pendingExport=null,exportSequence=0;
+function finishExport(id,status,message){
+  if(!pendingExport||pendingExport.id!==id)return;
+  var request=pendingExport;pendingExport=null;
+  if(status==="cancelled")return;
+  if(status!=="saved"){showSavedToast("Export failed: "+(message||"Unable to write the file. Please try again."),true);return;}
+  // The native writer / browser file handle has closed successfully at this point.
+  audit(request.action,request.detail,request.person);
+  try{save();showSavedToast("File saved successfully");}
+  catch(e){showSavedToast("File saved, but the export audit could not be saved. Your app data is unchanged.",true);}
+}
+if(typeof window!=="undefined")window.neuropatternExportResult=finishExport;
+function download(name,text,type,action,detail){
+  if(pendingExport){showSavedToast("Finish or cancel the current export first.",true);return;}
+  var id="export-"+Date.now()+"-"+(++exportSequence);
+  pendingExport={id:id,action:action,detail:detail,person:state.active};
+  try{
+    if(typeof window!=="undefined"&&window.NeuroPatternAndroid&&typeof window.NeuroPatternAndroid.exportFile==="function"){
+      window.NeuroPatternAndroid.exportFile(id,name,type,text);return;
+    }
+    if(typeof window!=="undefined"&&typeof window.showSaveFilePicker==="function"){
+      var accept={};accept[type]=[name.slice(name.lastIndexOf("."))];
+      window.showSaveFilePicker({suggestedName:name,types:[{description:"NeuroPattern export",accept:accept}]}).then(async function(handle){
+        var writer=await handle.createWritable();
+        try{await writer.write(text);await writer.close();finishExport(id,"saved");}
+        catch(e){try{await writer.abort();}catch(ignored){}throw e;}
+      },function(e){finishExport(id,e.name==="AbortError"?"cancelled":"error",e.message);}).catch(function(e){finishExport(id,"error",e.message);});return;
+    }
+    // Legacy browsers cannot confirm completion. Request a download without auditing success.
+    var blob=new Blob([text],{type:type}),u=URL.createObjectURL(blob),a=document.createElement("a");
+    try{a.href=u;a.download=name;document.body.appendChild(a);a.click();}
+    finally{a.remove();setTimeout(function(){URL.revokeObjectURL(u);},30000);}
+    pendingExport=null;showSavedToast("Download requested. Check your downloads.");
+  }catch(e){finishExport(id,"error",e.message);}
+}
+function exportJSON(){download("NeuroPattern-backup.json",JSON.stringify(state,null,2),"application/json","EXPORT_BACKUP","Full JSON backup");}
+function exportCSV(){
   var rows=[["timestamp","type","level","behaviours","possible_factors","antecedent","consequence","pain","sleep","interventions","outcome","injury","property_damage","restrictive_intervention","duration_minutes","notes"]];
   mine().forEach(function(x){rows.push([x.ts,x.type,x.level,(x.behaviours||[]).join("; "),(x.triggers||[]).join("; "),x.antecedent,x.consequence,x.pain,x.sleep,(x.interventions||[]).join("; "),x.outcome,x.injury,x.damage,x.restrictive,x.duration,x.notes]);});
   var csv=rows.map(function(r){return r.map(function(v){return '"'+String(v==null?"":v).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
-  download("NeuroPattern-behaviour.csv",csv,"text/csv");
+  download("NeuroPattern-behaviour.csv",csv,"text/csv","EXPORT_CSV","Behaviour CSV");
 }
 function importJSON(e){
   var file=e.target.files&&e.target.files[0];if(!file)return;
