@@ -557,7 +557,8 @@ function loadState(){
   if(!d.active||!d.people.some(function(p){return p&&p.id===d.active;}))d.active=d.people[0].id;
   return d;
 }
-var state=loadState(), current="home", draftLevel=null, patternDays=7, reportDays=Number((state.settings&&state.settings.reportDays)||7), editingId=null, quickLastId=null;
+var state=loadState(), current="home", draftLevel=null, patternDays=7, reportDays=Number((state.settings&&state.settings.reportDays)||7), editingId=null, editingPerson=null, recordMode="quick", quickLastId=null;
+var persistedState=clone(state);
 var tabDefs=[["home","Home"],["log","Log"],["timeline","Timeline"],["patterns","Patterns"],["meds","Meds"],["people","People"],["reports","Reports"],["settings","Settings"]];
 var behaviours=["Pacing","Repetitive questioning","Raised voice","Swearing","Verbal threats","Refusing care","Pushing / grabbing","Striking out","Kicking","Throwing objects","Property damage","Self-injury","Disinhibition","Other"];
 var triggers=["Personal care","Medication due","Medication recently given","Pain / discomfort","Noise / overstimulation","Busy environment","Multiple people talking","Too much information","Communication difficulty","Difficulty expressing needs","Memory / recall difficulty","Attention / concentration difficulty","Difficulty adapting to change","Sensory / perceptual difficulty","Fatigue","Poor sleep","Hunger / thirst","Bowel / bladder discomfort","Change of routine","Transition / waiting","Unfamiliar person","Demand / request","Conflict / interaction","Unknown"];
@@ -566,17 +567,91 @@ var escalationRates=["Not recorded","Gradual","Rapid","Sudden"];
 var recoveryStates=["Not recorded","Returned to usual presentation","Partly settled","Still unsettled / escalated","Not known"];
 var interventions=["Quiet space","Reassurance","Validation","Distraction / redirection","Reduced demands","Change of staff approach","Snack / drink","Pain relief as prescribed","PRN medication as prescribed","Sensory reduction","Preferred activity","Time alone / space","No intervention"];
 function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function save(form){
+  try{
+    var json=JSON.stringify(state);
+    localStorage.setItem(KEY,json);
+    if(localStorage.getItem(KEY)!==json)throw new Error("Stored data could not be verified.");
+    persistedState=clone(state);
+    if(form&&form.id!=="logForm"){
+      try{var draft=JSON.parse(sessionStorage.getItem("np-v13-form-draft")||"null");if(draft&&draft.formId===form.id&&draft.person===state.active)sessionStorage.removeItem("np-v13-form-draft");}catch(e){console.error("Saved draft cleanup failed",e);}
+    }
+  }catch(e){
+    state=clone(persistedState);
+    alert("Unable to save: "+(e.message||String(e))+". Your changes have not been confirmed; keep this screen open and retry.");
+    e.neuropatternSaveReported=true;throw e;
+  }
+}
+function clearEditing(){editingId=null;editingPerson=null;draftLevel=null;recordMode="quick";}
+function startRecord(mode){rememberDraft();clearEditing();recordMode=mode||"quick";current="log";render();}
+function openEarlyWarning(){startRecord("detailed");applyRecordMode("detailed");rememberDraft();var el=document.getElementById("earlyWarningSection");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});}
+function changePerson(id){
+  if(!state.people.some(function(p){return p.id===id;}))return;
+  rememberDraft();state.active=id;save();clearEditing();render();
+}
+function newRecordId(){var id=Date.now();while(state.logs.some(function(x){return x.id===String(id);}))id++;return String(id);}
+function sessionDraftKey(form){return "np-v13-log-draft-"+form.dataset.person+"-"+(form.dataset.recordId||"new");}
+function nullableNumber(v){return v==null||v===""?null:Number(v);}
+function nullableText(v){return v==null||v===""?null:v;}
+function nullableSelect(v){return v==="Unknown"||v==="Not known"||v==="Not recorded"?null:nullableText(v);}
+function chipValues(name){var g=document.querySelector('.chips[data-name="'+name+'"]');return selected(name).concat(g&&g.dataset.retained?JSON.parse(g.dataset.retained):[]);}
+function nullableChips(name){var group=document.querySelector('.chips[data-name="'+name+'"]');return group&&group.dataset.answered==="true"?chipValues(name):null;}
+function safetyValue(el){return el.dataset.answer===""?null:el.dataset.answer==="true";}
+function draftKey(form){return "neuropattern-draft-"+form.dataset.person+(form.dataset.recordId?"-edit-"+form.dataset.recordId:"");}
+function collectLogDraft(form){
+  var d={version:2,person:form.dataset.person,recordId:form.dataset.recordId||"",savedAt:Date.now(),fields:{},chips:{},answers:{},mode:recordMode,prnFollowFor:form.dataset.prnFollowFor||"",pendingId:form.dataset.pendingId||""};
+  Array.prototype.forEach.call(form.elements,function(el){if(el.name)d.fields[el.name]=el.type==="checkbox"?el.checked:el.value;});
+  form.querySelectorAll('.chips').forEach(function(g){d.chips[g.dataset.name]=chipValues(g.dataset.name);d.answers[g.dataset.name]=g.dataset.answered||"";});
+  form.querySelectorAll('input[type="checkbox"]').forEach(function(el){d.answers[el.name]=el.dataset.answer||"";});
+  return d;
+}
+function rememberDraft(){
+  var form=document.getElementById("logForm");if(!form)return;
+  var json=JSON.stringify(collectLogDraft(form)),errors=[];
+  try{localStorage.setItem(draftKey(form),json);}catch(e){errors.push(e);}
+  try{sessionStorage.setItem(sessionDraftKey(form),json);}catch(e){errors.push(e);}
+  if(errors.length){console.error("Draft storage failed",errors);if(!form.dataset.draftWarning){form.dataset.draftWarning="true";alert("Draft protection is unavailable in one or more storage areas. Keep this form open until the record is saved.");}}
+}
+function restoreLogDraft(form){
+  var candidates=[];
+  [function(){return localStorage.getItem(draftKey(form));},function(){return sessionStorage.getItem(sessionDraftKey(form));},function(){return sessionStorage.getItem("np-v13-form-draft");}].forEach(function(read){
+    try{var d=JSON.parse(read()||"null");if(!d)return;
+      if(d.version===2){if(d.person===form.dataset.person&&(d.recordId||"")===(form.dataset.recordId||"")){
+        if(!d.recordId&&d.pendingId&&state.logs.some(function(x){return x.id===d.pendingId;}))return;
+        candidates.push(d);
+      }}
+      else if(!d.fields&&!form.dataset.recordId)candidates.push({fields:d,savedAt:0});
+      // Unscoped legacy session drafts cannot safely be assigned to a person or record.
+    }catch(e){console.error("Draft could not be read",e);}
+  });
+  candidates.sort(function(a,b){return (a.savedAt||0)-(b.savedAt||0);});
+  candidates.forEach(function(d){
+    Object.keys(d.fields||{}).forEach(function(k){var el=form.elements[k];if(!el)return;if(el.type==="checkbox")el.checked=!!d.fields[k];else el.value=d.fields[k]==null?"":d.fields[k];});
+    Object.keys(d.chips||{}).forEach(function(k){var g=form.querySelector('.chips[data-name="'+k+'"]');if(!g||!Array.isArray(d.chips[k]))return;var known=Array.prototype.map.call(g.querySelectorAll(".chip"),function(b){return b.dataset.v;});g.dataset.retained=JSON.stringify(d.chips[k].filter(function(v){return known.indexOf(v)===-1;}));g.querySelectorAll('.chip').forEach(function(b){b.classList.toggle("on",d.chips[k].indexOf(b.dataset.v)!==-1);});});
+    Object.keys(d.answers||{}).forEach(function(k){var el=form.elements[k],g=form.querySelector('.chips[data-name="'+k+'"]');if(el&&el.type==="checkbox")el.dataset.answer=d.answers[k];else if(g)g.dataset.answered=d.answers[k];});
+    if(d.mode)applyRecordMode(d.mode);form.dataset.prnFollowFor=d.prnFollowFor||"";form.dataset.pendingId=d.pendingId||"";
+  });
+  syncLogChoices(form);
+}
+function clearLogDraft(form){
+  try{localStorage.removeItem(draftKey(form));}catch(e){console.error("Saved draft cleanup failed",e);}
+  try{sessionStorage.removeItem(sessionDraftKey(form));var d=JSON.parse(sessionStorage.getItem("np-v13-form-draft")||"null");if(d&&d.person===form.dataset.person&&(d.recordId||"")===(form.dataset.recordId||""))sessionStorage.removeItem("np-v13-form-draft");}catch(e){console.error("Saved session draft cleanup failed",e);}
+}
+function syncLogChoices(form){
+  form.querySelectorAll('[data-intensity]').forEach(function(b){b.classList.toggle("on",b.dataset.intensity===form.elements.level.value);});
+  form.querySelectorAll('[data-entry-choice]').forEach(function(b){b.classList.toggle("on",b.dataset.entryChoice===form.elements.type.value);});
+  document.querySelectorAll('[data-count-for]').forEach(function(c){var el=form.elements[c.dataset.countFor];if(el)c.textContent=el.value.length+"/500";});
+}
 function active(){return state.people.find(function(p){return p&&p.id===state.active;})||state.people[0];}
 function mine(){return state.logs.filter(function(x){return x.person===state.active;});}
 function medsMine(){return state.medLogs.filter(function(x){return x.person===state.active;});}
 function todayKey(){return new Date().toISOString().slice(0,10);}
-function levelName(n){return ["Calm","Unsettled","Agitated","Highly agitated","Aggressive"][Number(n)]||"Unknown";}
+function levelName(n){if(n==null||n==="")return "Not recorded";return ["Calm","Unsettled","Agitated","Highly agitated","Aggressive"][Number(n)]||"Unknown";}
 function renderTabs(){
   document.getElementById("activeBadge").textContent=active().name||"Profile";
   var el=document.getElementById("tabs");
   el.innerHTML=tabDefs.map(function(t){return '<button class="'+(current===t[0]?"on":"")+'" data-tab="'+t[0]+'">'+t[1]+'</button>';}).join("");
-  Array.prototype.forEach.call(el.querySelectorAll("button"),function(b){b.onclick=function(){current=b.dataset.tab;render();};});
+  Array.prototype.forEach.call(el.querySelectorAll("button"),function(b){b.onclick=function(){rememberDraft();if(b.dataset.tab==="log")clearEditing();current=b.dataset.tab;render();};});
 }
 function card(s,cls){return '<div class="card '+(cls||"")+'">'+s+'</div>';}
 function chips(name,arr){return '<div class="row chips" data-name="'+name+'">'+arr.map(function(v){return '<button type="button" class="chip" data-v="'+esc(v)+'">'+esc(v)+'</button>';}).join("")+'</div>';}
@@ -585,7 +660,8 @@ function withinDays(ts,days){return (Date.now()-new Date(ts).getTime())<=days*86
 function summary(days){
   var l=mine().filter(function(x){return withinDays(x.ts,days);});
   var severe=l.filter(function(x){return Number(x.level)>=3;});
-  return {all:l,severe:severe,avg:l.length?(l.reduce(function(a,x){return a+Number(x.level||0);},0)/l.length):0};
+  var assessed=l.filter(function(x){return x.level!=null&&x.level!=="";});
+  return {all:l,severe:severe,avg:assessed.length?(assessed.reduce(function(a,x){return a+Number(x.level);},0)/assessed.length):null};
 }
 function countMap(arr,field){
   var m={};arr.forEach(function(x){(x[field]||[]).forEach(function(v){m[v]=(m[v]||0)+1;});});return m;
@@ -646,7 +722,7 @@ function medicationBehaviourChart(days){
   var cutoff=Date.now()-days*86400000, logs=mine().filter(function(x){return new Date(x.ts).getTime()>=cutoff;}), meds=medsMine().filter(function(x){return new Date(x.ts).getTime()>=cutoff;});
   if(!logs.length&&!meds.length)return '<div class="empty">No behaviour or medication events in this period.</div>';
   var start=Date.now()-days*86400000, span=days*86400000;
-  var dots=logs.slice(-100).map(function(x){var left=100*(new Date(x.ts).getTime()-start)/span,bottom=12+Number(x.level||0)*24;return '<span class="eventdot '+(Number(x.level)>=3?'high':'')+'" style="left:'+left+'%;bottom:'+bottom+'px" title="'+esc(levelName(x.level))+'"></span>';}).join("");
+  var dots=logs.filter(function(x){return x.level!=null&&x.level!=="";}).slice(-100).map(function(x){var left=100*(new Date(x.ts).getTime()-start)/span,bottom=12+Number(x.level||0)*24;return '<span class="eventdot '+(Number(x.level)>=3?'high':'')+'" style="left:'+left+'%;bottom:'+bottom+'px" title="'+esc(levelName(x.level))+'"></span>';}).join("");
   var marks=meds.slice(-100).map(function(x){var left=100*(new Date(x.ts).getTime()-start)/span;return '<span class="medmark" style="left:'+left+'%" title="'+esc(x.name)+'"></span>';}).join("");
   return '<div class="timelineChart"><div class="axisline" style="bottom:36px"></div><div class="axisline" style="bottom:84px"></div><div class="axisline" style="bottom:132px"></div>'+marks+dots+'<span class="axislabel" style="left:1%">-'+days+'d</span><span class="axislabel" style="left:50%">mid</span><span class="axislabel" style="left:98%">now</span></div><div class="legend"><span><i class="dot"></i>behaviour</span><span><i class="dot high"></i>high intensity</span><span><i class="dot med"></i>medication time</span></div>';
 }
@@ -657,7 +733,7 @@ function prnStats(days){
   prn.forEach(function(p){
     var pt=new Date(p.ts).getTime(), before=mine().filter(function(x){var d=pt-new Date(x.ts).getTime();return d>=0&&d<=2*3600000;}).sort(function(a,b){return new Date(b.ts)-new Date(a.ts);})[0];
     var after=mine().filter(function(x){var d=new Date(x.ts).getTime()-pt;return d>=0&&d<=2*3600000;}).sort(function(a,b){return new Date(a.ts)-new Date(b.ts);})[0];
-    if(before&&after){observed++;if(Number(after.level)<Number(before.level))improved++;}
+    if(before&&after&&before.level!=null&&after.level!=null){observed++;if(Number(after.level)<Number(before.level))improved++;}
   });
   return {n:prn.length,text:observed?improved+" of "+observed+" PRN administrations with comparable behaviour records had a lower recorded intensity within 2 hours.":"PRN administrations are recorded, but there are not enough before/after behaviour observations to compare."};
 }
@@ -675,7 +751,7 @@ function homeView(){
     '<div class="statusPanel"><h3>How are they right now?</h3><div class="sub">Tap once to save a quick observation. You can add details afterwards.</div><div class="statusRow">'+
       [0,1,2,3,4].map(function(i){return '<button class="statusBtn" data-level="'+i+'"><span>'+faces[i]+'</span><b>'+names[i]+'</b><small>Level '+i+'</small></button>';}).join("")+
     '</div></div>'+
-    '<div class="homeActions"><button class="homeAction" data-go="log">＋ Full record<span>Behaviour or incident</span></button><button class="homeAction" data-go="log">⚠ Early warning<span>Signs & escalation</span></button><button class="homeAction" data-go="meds">💊 Medication<span>Administration</span></button></div>'+
+    '<div class="homeActions"><button class="homeAction" data-go="log">＋ Full record<span>Behaviour or incident</span></button><button class="homeAction" data-go="early">⚠ Early warning<span>Signs & escalation</span></button><button class="homeAction" data-go="meds">💊 Medication<span>Administration</span></button></div>'+
     '<div class="earlyHome"><h3>⚠ Early Warning & Escalation</h3><p>Capture observable changes before, during and after escalation.</p><div class="earlyStats"><div class="earlyStat"><b>'+all.filter(function(x){return (x.warningSigns||[]).length;}).length+'</b><small>warning-sign records</small></div><div class="earlyStat"><b>'+all.filter(function(x){return x.escalationRate&&x.escalationRate!=="Not recorded";}).length+'</b><small>escalations tracked</small></div><div class="earlyStat"><b>'+all.filter(function(x){return Number(x.recoveryMinutes||0)>0;}).length+'</b><small>recoveries timed</small></div></div></div>'+
     '<div class="glanceGrid"><div class="glanceCard"><small>Last observation</small><b>'+esc(last?levelName(last.level):"None yet")+'</b></div><div class="glanceCard"><small>Last medication</small><b>'+esc(lastMed?(lastMed.name||"Recorded"):"None yet")+'</b></div></div>'+
     '<div class="patternHome"><div class="patternHomeTop"><div class="patternIcon">⌁</div><div><b>7-day pattern watch</b><p>'+esc(patternText)+'</p></div></div></div>'+
@@ -695,25 +771,25 @@ function logView(){
   '<div class="logTip"><span>✓</span><div><b>Keep it factual.</b> Record what was observed, what happened around it and the response. Optional fields can be left blank when not known.</div></div>'+
   '<div class="recordModeSwitch" role="group" aria-label="Recording mode"><button type="button" data-record-mode="quick" class="on">Quick record</button><button type="button" data-record-mode="detailed">Detailed record</button></div>'+
   '<p class="recordModeHint" id="recordModeHint">Essential fields first. Switch to Detailed to add context, support and review information.</p>'+
-  '<form id="logForm">'+
+  '<form id="logForm" data-person="'+esc(state.active)+'" data-record-id="'+esc(editingId||'')+'">'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Entry type</h3></div></div>'+
       '<input type="hidden" name="type" id="entryTypeValue" value="'+esc(er&&er.type?er.type:"Observation")+'">'+
       '<div class="choiceGrid"><button type="button" class="choiceCard entryChoice '+((!er||er.type==="Observation")?"on":"")+'" data-entry-choice="Observation">Observation</button><button type="button" class="choiceCard entryChoice '+(er&&er.type==="Incident"?"on":"")+'" data-entry-choice="Incident">Incident</button><button type="button" class="choiceCard entryChoice '+(er&&er.type==="Other"?"on":"")+'" data-entry-choice="Other">Other</button></div>'+
     '</div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Intensity</h3><p>Select the highest level observed.</p></div></div>'+
-      '<input type="hidden" name="level" id="levelSelect" value="'+String(er?Number(er.level):0)+'">'+
-      '<div class="intensityGrid">'+faces.map(function(face,i){return '<button type="button" class="intensityCard '+((er?Number(er.level):0)===i?"on":"")+'" data-intensity="'+i+'"><span class="face">'+face+'</span><b>'+i+'</b><small>'+labels[i]+'</small></button>';}).join("")+'</div>'+
+      '<input type="hidden" name="level" id="levelSelect" value="'+String(er&&er.level!=null?Number(er.level):"")+'">'+
+      '<div class="intensityGrid">'+faces.map(function(face,i){return '<button type="button" class="intensityCard '+((er&&er.level!=null?Number(er.level):null)===i?"on":"")+'" data-intensity="'+i+'"><span class="face">'+face+'</span><b>'+i+'</b><small>'+labels[i]+'</small></button>';}).join("")+'</div>'+
     '</div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Behaviour</h3><p>Select all that apply.</p></div><button type="button" class="clearMini" data-clear-chips="behaviours">Clear all</button></div><div class="logPills">'+chips("behaviours",behaviours)+'</div></div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Context / possible factors</h3><p>Select anything recorded around the event. This does not imply causation.</p></div><button type="button" class="clearMini" data-clear-chips="triggers">Clear all</button></div><div class="logPills">'+chips("triggers",triggers)+'</div></div>'+
-    '<div class="formSection quickOptional"><div class="formSectionHead"><div><h3>Early warning signs</h3><p>Record observable changes only — select all that apply.</p></div><button type="button" class="clearMini" data-clear-chips="warningSigns">Clear all</button></div><div class="logPills">'+chips("warningSigns",warningSigns)+'</div></div>'+
+    '<div class="formSection quickOptional" id="earlyWarningSection"><div class="formSectionHead"><div><h3>Early warning signs</h3><p>Record observable changes only — select all that apply.</p></div><button type="button" class="clearMini" data-clear-chips="warningSigns">Clear all</button></div><div class="logPills">'+chips("warningSigns",warningSigns)+'</div></div>'+
     '<div class="formSection grid2 quickOptional"><div><div class="formSectionHead"><div><h3>Escalation</h3><p>How quickly did the presentation change?</p></div></div><select name="escalationRate">'+escalationRates.map(function(x){return '<option>'+esc(x)+'</option>';}).join("")+'</select></div><div><div class="formSectionHead"><div><h3>Recovery</h3><p>Presentation after support / time.</p></div></div><select name="recoveryState">'+recoveryStates.map(function(x){return '<option>'+esc(x)+'</option>';}).join("")+'</select></div></div>'+
     '<div class="formSection quickOptional"><div class="formSectionHead"><div><h3>What happened immediately before?</h3></div></div><div class="counterWrap"><textarea class="logTextarea" maxlength="500" name="antecedent" placeholder="e.g. asked to get dressed, told no, waiting for activity..."></textarea><span class="charCount" data-count-for="antecedent">0/500</span></div></div>'+
     '<div class="formSection quickOptional"><div class="formSectionHead"><div><h3>What happened immediately after?</h3><p>Consequence / response / recovery.</p></div></div><div class="counterWrap"><textarea class="logTextarea" maxlength="500" name="consequence" placeholder="e.g. calmed after 10 minutes, offered drink, went to quiet room..."></textarea><span class="charCount" data-count-for="consequence">0/500</span></div></div>'+
     '<div class="formSection quickOptional"><div class="formSectionHead"><div><h3>Intervention / de-escalation</h3><p>Select all that apply.</p></div><button type="button" class="clearMini" data-clear-chips="interventions">Clear all</button></div><div class="logPills">'+chips("interventions",interventions)+'</div></div>'+
     '<div class="formSection quickOptional"><div class="formSectionHead"><div><h3>Outcome</h3></div></div><select name="outcome"><option>Not known</option><option>Much calmer</option><option>Somewhat calmer</option><option>No change</option><option>More agitated</option></select></div>'+
-    '<div class="formSection quickOptional"><div class="formSectionHead"><div><h3>Safety / associated events</h3><p>Mark only what was actually recorded.</p></div></div><div class="factorGrid"><label class="factorCheck"><input type="checkbox" name="injury"> Injury</label><label class="factorCheck"><input type="checkbox" name="damage"> Property damage</label><label class="factorCheck"><input type="checkbox" name="restrictive"> Restrictive intervention</label></div></div>'+
-    '<div class="formSection grid2 quickOptional"><div><div class="formSectionHead"><div><h3>Duration (minutes)</h3></div></div><div class="stepField"><input class="inp" id="durationInput" type="number" min="0" name="duration" placeholder="Optional"><button type="button" class="stepBtn" data-step-target="durationInput" data-step="-1">−</button><button type="button" class="stepBtn" data-step-target="durationInput" data-step="1">+</button></div></div><div><div class="formSectionHead"><div><h3>Pain (0–10)</h3></div></div><div class="stepField"><input class="inp" id="painInput" type="number" min="0" max="10" name="pain" value="0"><button type="button" class="stepBtn" data-step-target="painInput" data-step="-1">−</button><button type="button" class="stepBtn" data-step-target="painInput" data-step="1">+</button></div></div></div>'+
+    '<div class="formSection quickOptional"><div class="formSectionHead"><div><h3>Safety / associated events</h3><p>Untouched boxes mean not recorded. Select only events observed; clearing a selected box records No.</p></div></div><div class="factorGrid"><label class="factorCheck"><input type="checkbox" name="injury"> Injury</label><label class="factorCheck"><input type="checkbox" name="damage"> Property damage</label><label class="factorCheck"><input type="checkbox" name="restrictive"> Restrictive intervention</label></div></div>'+
+    '<div class="formSection grid2 quickOptional"><div><div class="formSectionHead"><div><h3>Duration (minutes)</h3></div></div><div class="stepField"><input class="inp" id="durationInput" type="number" min="0" name="duration" placeholder="Optional"><button type="button" class="stepBtn" data-step-target="durationInput" data-step="-1">−</button><button type="button" class="stepBtn" data-step-target="durationInput" data-step="1">+</button></div></div><div><div class="formSectionHead"><div><h3>Pain (0–10)</h3></div></div><div class="stepField"><input class="inp" id="painInput" type="number" min="0" max="10" name="pain" placeholder="Optional"><button type="button" class="stepBtn" data-step-target="painInput" data-step="-1">−</button><button type="button" class="stepBtn" data-step-target="painInput" data-step="1">+</button></div></div></div>'+
     '<div class="formSection quickOptional"><div class="formSectionHead"><div><h3>Sleep (last night)</h3></div></div><select name="sleep"><option>Unknown</option><option>Good</option><option>Interrupted</option><option>Poor</option></select></div>'+
     '<div class="formSection quickOptional"><div class="formSectionHead"><div><h3>Recovery time (minutes)</h3><p>Optional — time until the person returned towards their usual presentation.</p></div></div><input class="inp" type="number" min="0" name="recoveryMinutes" placeholder="Optional"></div>'+
     '<div class="formSection quickOptional"><div class="formSectionHead"><div><h3>Staff reflection</h3><p>Optional: could anything be approached differently next time?</p></div></div><div class="counterWrap"><textarea class="logTextarea" maxlength="500" name="staffReflection" placeholder="Factual reflection for future support..."></textarea><span class="charCount" data-count-for="staffReflection">0/500</span></div></div>'+
@@ -758,7 +834,7 @@ function patternsView(){
   var topInt=topKeys(interventions,6), maxInt=Math.max(1,...topInt.map(function(k){return interventions[k];}));
   return v8Header()+'<h1 class="h1">Pattern Intelligence</h1><div class="p">Visual trends and recorded associations for '+esc(active().name)+'.</div>'+
   '<div class="range"><button data-range="7" class="'+(days===7?'on':'')+'">7 days</button><button data-range="30" class="'+(days===30?'on':'')+'">30 days</button><button data-range="90" class="'+(days===90?'on':'')+'">90 days</button></div>'+
-  '<div class="grid3"><div class="card stat"><div class="big">'+s.all.length+'</div><div class="small">records</div></div><div class="card stat"><div class="big">'+s.severe.length+'</div><div class="small">high intensity</div></div><div class="card stat"><div class="big">'+s.avg.toFixed(1)+'</div><div class="small">avg intensity</div></div></div>'+
+  '<div class="grid3"><div class="card stat"><div class="big">'+s.all.length+'</div><div class="small">records</div></div><div class="card stat"><div class="big">'+s.severe.length+'</div><div class="small">high intensity</div></div><div class="card stat"><div class="big">'+(s.avg==null?'Not recorded':s.avg.toFixed(1))+'</div><div class="small">avg intensity</div></div></div>'+
   card('<b>Association, not causation</b><div class="p">Pattern Intelligence summarises what was recorded together or close in time. It does not establish that medication, pain, sleep, a person or an event caused behaviour.</div>','notice')+
   '<div class="h2">Daily behaviour intensity</div>'+bars(series,"intensity")+
   '<div class="h2">Medication ↔ behaviour timeline</div>'+medicationBehaviourChart(days)+
@@ -819,7 +895,7 @@ function peopleView(){
 function lastHandoverTime(){var hs=(state.handovers||[]).filter(function(h){return h.person===state.active;}).sort(function(a,b){return new Date(b.ts)-new Date(a.ts);});return hs.length?new Date(hs[0].ts).getTime():Date.now()-12*3600000;}
 function sinceLastHandover(){var cutoff=lastHandoverTime(),logs=mine().filter(function(x){return new Date(x.ts).getTime()>cutoff;}),meds=medsMine().filter(function(x){return new Date(x.ts).getTime()>cutoff;}),severe=logs.filter(function(x){return Number(x.level)>=3;}),risks=logs.filter(function(x){return x.injury||x.damage||x.restrictive;}),helpful={};logs.forEach(function(x){if(x.outcome==="Much calmer"||x.outcome==="Somewhat calmer")(x.interventions||[]).forEach(function(v){helpful[v]=(helpful[v]||0)+1;});});var best=topKeys(helpful,2);return {logs:logs,meds:meds,severe:severe,risks:risks,helpful:best.map(function(k){return k+" ("+helpful[k]+")";})};}
 function handoverSinceText(){var x=sinceLastHandover(),p=[x.logs.length+" behaviour/mood records",x.severe.length+" high-intensity",x.meds.length+" medication administrations"];if(x.risks.length)p.push(x.risks.length+" safety-flag records");if(x.helpful.length)p.push("approaches recorded alongside improvement: "+x.helpful.join(", "));return p.join(". ")+".";}
-function duplicateLog(id){var src=state.logs.find(function(x){return x.id===id;});if(!src)return;var d=new Date(),rec=JSON.parse(JSON.stringify(src));rec.id=String(Date.now());rec.ts=d.toISOString();rec.date=d.toISOString().slice(0,10);rec.updatedTs="";rec.staff=staff()||"Not set";rec.quick=false;state.logs.push(rec);audit("DUPLICATE_BEHAVIOUR",rec.type+" • "+levelName(rec.level),rec.person);save();render();showSavedToast("Previous record duplicated ✓");}
+function duplicateLog(id){var src=state.logs.find(function(x){return x.id===id;});if(!src)return;var d=new Date(),rec=JSON.parse(JSON.stringify(src));rec.id=newRecordId();rec.ts=d.toISOString();rec.date=d.toISOString().slice(0,10);rec.updatedTs="";rec.staff=staff()||"Not set";rec.quick=false;state.logs.push(rec);audit("DUPLICATE_BEHAVIOUR",rec.type+" • "+levelName(rec.level),rec.person);save();render();showSavedToast("Previous record duplicated ✓");}
 function showSavedToast(msg){var old=document.querySelector(".savedToast");if(old)old.remove();var d=document.createElement("div");d.className="savedToast";d.textContent=msg||"Saved ✓";document.body.appendChild(d);setTimeout(function(){if(d.parentNode)d.remove();},1800);}
 function handoverSummary(){
   var cutoff=Date.now()-12*3600000,l=mine().filter(function(x){return new Date(x.ts).getTime()>=cutoff;}),m=medsMine().filter(function(x){return new Date(x.ts).getTime()>=cutoff;}),sev=l.filter(function(x){return Number(x.level)>=3;});
@@ -939,21 +1015,25 @@ function showQuickToast(rec){
   var d=document.createElement("div");d.id="quickToast";d.className="quickToast";
   d.innerHTML='<div class="grow"><b>'+esc(levelName(rec.level))+' saved</b><div style="font-size:11px;opacity:.8">'+new Date(rec.ts).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})+' • '+esc(staff())+'</div></div><button class="details">ADD DETAILS</button><button class="undo">UNDO</button>';
   document.body.appendChild(d);
-  d.querySelector(".details").onclick=function(){editingId=rec.id;current="log";d.remove();render();};
+  d.querySelector(".details").onclick=function(){rememberDraft();editingId=rec.id;editingPerson=rec.person;state.active=rec.person;recordMode="detailed";current="log";d.remove();render();};
   d.querySelector(".undo").onclick=function(){state.logs=state.logs.filter(function(x){return x.id!==rec.id;});audit("UNDO_QUICK","Quick observation removed",rec.person);save();d.remove();render();};
   setTimeout(function(){if(d.parentNode)d.remove();},6500);
 }
 function quickSaveLevel(level){
-  var d=new Date(),rec={id:String(Date.now()),person:state.active,staff:staff()||"Not set",ts:d.toISOString(),date:d.toISOString().slice(0,10),type:"Observation",level:Number(level),behaviours:[],triggers:[],antecedent:"",consequence:"",pain:0,sleep:"Unknown",interventions:[],outcome:"Not known",injury:false,damage:false,restrictive:false,duration:0,warningSigns:[],escalationRate:"Not recorded",recoveryState:"Not recorded",recoveryMinutes:0,staffReflection:"",notes:"",quick:true};
-  state.logs.push(rec);try{localStorage.removeItem("neuropattern-draft-"+state.active);}catch(e){}quickLastId=rec.id;audit("QUICK_OBSERVATION",levelName(level),rec.person);save();render();showQuickToast(rec);
+  var d=new Date(),rec={id:newRecordId(),person:state.active,staff:staff()||"Not set",ts:d.toISOString(),date:d.toISOString().slice(0,10),type:"Observation",level:Number(level),behaviours:null,triggers:null,antecedent:null,consequence:null,pain:null,sleep:null,interventions:null,outcome:null,injury:null,damage:null,restrictive:null,duration:null,warningSigns:null,escalationRate:null,recoveryState:null,recoveryMinutes:null,staffReflection:null,notes:null,quick:true};
+  rememberDraft();state.logs.push(rec);audit("QUICK_OBSERVATION",levelName(level),rec.person);save();quickLastId=rec.id;render();showQuickToast(rec);
 }
 function editFormSelections(rec){
   if(!rec)return;
-  var ls=document.getElementById("levelSelect");if(ls)ls.value=String(rec.level);
   var f=document.getElementById("logForm");if(!f)return;
-  ["type","antecedent","consequence","pain","sleep","outcome","duration","notes"].forEach(function(n){var el=f.elements[n];if(el&&rec[n]!=null)el.value=rec[n];});
-  ["injury","damage","restrictive"].forEach(function(n){var el=f.elements[n];if(el)el.checked=!!rec[n];});
-  [["behaviours",rec.behaviours],["triggers",rec.triggers],["interventions",rec.interventions]].forEach(function(a){(a[1]||[]).forEach(function(v){var b=document.querySelector('.chips[data-name="'+a[0]+'"] .chip[data-v="'+CSS.escape(v)+'"]');if(b)b.classList.add("on");});});
+  ["type","level","antecedent","consequence","pain","sleep","outcome","duration","notes","escalationRate","recoveryState","recoveryMinutes","staffReflection"].forEach(function(n){
+    var el=f.elements[n];if(!el)return;
+    if(rec[n]!=null)el.value=rec[n];else if(el.tagName!=="SELECT")el.value="";
+  });
+  ["injury","damage","restrictive"].forEach(function(n){var el=f.elements[n];if(!el)return;var v=rec[n];el.checked=v===true||v==="Yes";el.dataset.answer=v==null?"":String(el.checked);});
+  ["behaviours","triggers","interventions","warningSigns"].forEach(function(n){var g=f.querySelector('.chips[data-name="'+n+'"]');if(!g)return;g.dataset.answered=rec[n]==null?"":"true";var known=Array.prototype.map.call(g.querySelectorAll(".chip"),function(b){return b.dataset.v;});g.dataset.retained=JSON.stringify((rec[n]||[]).filter(function(v){return known.indexOf(v)===-1;}));g.querySelectorAll('.chip').forEach(function(b){b.classList.toggle("on",(rec[n]||[]).indexOf(b.dataset.v)!==-1);});});
+  f.dataset.prnFollowFor=rec.prnFollowFor||"";
+  syncLogChoices(f);
 }
 
 function hashPin(v){
@@ -1000,7 +1080,7 @@ function seedDemo(){
   var demoId="demo-person";
   state.people=state.people.filter(function(p){return p.id!==demoId;});
   state.people.push({id:demoId,name:"Demo Person",baseline:"Usually calm with predictable routine.",communication:"Short clear phrases; allow processing time.",riskNotes:"Fictional demo profile only."});
-  state.active=demoId;
+  rememberDraft();clearEditing();state.active=demoId;
   var now=Date.now(), mk=function(h,l,b,t){var d=new Date(now-h*3600000);return {id:"d"+h+Math.random(),person:demoId,staff:"DM",ts:d.toISOString(),date:d.toISOString().slice(0,10),type:l>=3?"Incident":"Observation",level:l,behaviours:[b],triggers:[t],antecedent:"Fictional demo entry",consequence:"Fictional demo outcome",pain:"0",sleep:"Good",interventions:["Reassurance"],outcome:l>=2?"Somewhat calmer":"No change",injury:"No",damage:"No",restrictive:"No",duration:"5",notes:"Demo data — not a real person."};};
   state.logs=state.logs.filter(function(x){return x.person!==demoId;}).concat([
     mk(30,1,"Repetitive questioning","Waiting/transition"),
@@ -1019,7 +1099,7 @@ function clearDemo(){
   ["logs","meds","medLogs","handovers","audit"].forEach(function(k){state[k]=(state[k]||[]).filter(function(x){return x.person!==demoId;});});
   state.people=state.people.filter(function(p){return p.id!==demoId;});
   if(!state.people.length)state.people=[{id:"p1",name:"Person 1",baseline:"",communication:"",riskNotes:""}];
-  state.active=state.people[0].id;state.settings.demoMode=false;save();render();
+  rememberDraft();clearEditing();state.active=state.people[0].id;state.settings.demoMode=false;save();render();
 }
 function deleteAllLocalData(){
   if(!confirm("Delete ALL NeuroPattern data on this device? This cannot be undone unless you have exported a backup."))return;
@@ -1122,7 +1202,7 @@ function render(){document.body.classList.toggle("dark",!!(state.settings&&state
     var appEl=document.getElementById("app");
   if(appEl&&currentUser()){appEl.innerHTML=v125PersonBar()+appEl.innerHTML+v125RecordControls();}
   bind();
-    if(current==="log"&&draftLevel!==null){var ls=document.getElementById("levelSelect");if(ls){ls.value=String(draftLevel);}draftLevel=null;}if(current==="log"&&editingId){editFormSelections(state.logs.find(function(x){return x.id===editingId;}));}
+    if(current==="log"&&draftLevel!==null){var lf=document.getElementById("logForm");if(lf){lf.elements.level.value=String(draftLevel);syncLogChoices(lf);}draftLevel=null;}
   }catch(err){
     console.error(err);
     document.getElementById("tabs").innerHTML="";
@@ -1132,7 +1212,7 @@ function render(){document.body.classList.toggle("dark",!!(state.settings&&state
 }
 function applyRecordMode(mode){
   var form=document.getElementById("logForm");if(!form)return;
-  var detailed=mode==="detailed";
+  var detailed=mode==="detailed";recordMode=detailed?"detailed":"quick";
   form.classList.toggle("quickRecordMode",!detailed);
   Array.prototype.forEach.call(document.querySelectorAll("[data-record-mode]"),function(b){
     b.classList.toggle("on",b.dataset.recordMode===mode);
@@ -1144,30 +1224,32 @@ function applyRecordMode(mode){
 function bind(){
   if(document.getElementById("logForm")){
     var isEdit=!!editingId;
-    var mode=isEdit?"detailed":"quick";
+    var mode=isEdit?"detailed":recordMode;
     applyRecordMode(mode);
     Array.prototype.forEach.call(document.querySelectorAll("[data-record-mode]"),function(b){
-      b.onclick=function(){applyRecordMode(b.dataset.recordMode);};
+      b.onclick=function(){applyRecordMode(b.dataset.recordMode);rememberDraft();};
     });
   }
 
-  Array.prototype.forEach.call(document.querySelectorAll("[data-go]"),function(b){b.onclick=function(){current=b.dataset.go;render();};});
+  Array.prototype.forEach.call(document.querySelectorAll("[data-go]"),function(b){b.onclick=function(){var g=b.dataset.go;if(g==="early")openEarlyWarning();else if(g==="log")startRecord();else{rememberDraft();current=g;render();}};});
   Array.prototype.forEach.call(document.querySelectorAll("[data-range]"),function(b){b.onclick=function(){patternDays=Number(b.dataset.range);render();};});
   Array.prototype.forEach.call(document.querySelectorAll("[data-level]"),function(b){b.onclick=function(){quickSaveLevel(Number(b.dataset.level));};});
 
   var dt=document.getElementById("darkToggle");if(dt)dt.onclick=toggleDark;
   Array.prototype.forEach.call(document.querySelectorAll("[data-tfilter]"),function(b){b.onclick=function(){timelineFilter=b.dataset.tfilter;render();};});
-  var pqs=document.getElementById("personQuickSwitch");if(pqs)pqs.onchange=function(){if(state.people.some(function(p){return p.id===pqs.value;})){state.active=pqs.value;save();render();}};
+  var pqs=document.getElementById("personQuickSwitch");if(pqs)pqs.onchange=function(){changePerson(pqs.value);};
   var lfDraft=document.getElementById("logForm");
   if(lfDraft){
-    var dk="neuropattern-draft-"+state.active;
-    try{var d=JSON.parse(localStorage.getItem(dk)||"{}");Object.keys(d).forEach(function(k){var el=lfDraft.elements[k];if(el&&el.type!=="checkbox"&&el.type!=="radio"&&!el.value)el.value=d[k];});}catch(e){}
-    lfDraft.addEventListener("input",function(){var o={};Array.prototype.forEach.call(lfDraft.elements,function(el){if(el.name&&el.type!=="checkbox"&&el.type!=="radio")o[el.name]=el.value;});try{localStorage.setItem(dk,JSON.stringify(o));}catch(err){console.warn("Draft not saved",err);}});
+    lfDraft.querySelectorAll('input[type="checkbox"]').forEach(function(el){el.dataset.answer="";el.addEventListener("change",function(){el.dataset.answer=String(el.checked);rememberDraft();});});
+    if(editingId)editFormSelections(state.logs.find(function(x){return x.id===editingId&&x.person===editingPerson;}));
+    restoreLogDraft(lfDraft);
+    lfDraft.addEventListener("input",rememberDraft);
+    lfDraft.addEventListener("change",rememberDraft);
   }
 
   var qr=document.getElementById("quickRecordBtn"),rm=document.getElementById("recordMenu");
   if(qr&&rm)qr.onclick=function(){rm.classList.toggle("open");};
-  document.querySelectorAll("[data-record-go]").forEach(function(b){b.onclick=function(){var g=b.dataset.recordGo;if(g==="early"){current="log";render();setTimeout(function(){var el=document.querySelector("[data-early-warning],#earlyWarningSection");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});},80);}else{current=g;render();}};});
+  document.querySelectorAll("[data-record-go]").forEach(function(b){b.onclick=function(){var g=b.dataset.recordGo;if(g==="early"){openEarlyWarning();}else if(g==="log"){startRecord();}else{rememberDraft();current=g;render();}};});
   var ss=document.getElementById("supportShortcut");if(ss)ss.onclick=function(){current="people";render();};
   var sp=document.getElementById("switchPerson");if(sp)sp.onclick=function(){current="people";render();};
   document.querySelectorAll("[data-more-go]").forEach(function(b){b.onclick=function(){current=b.dataset.moreGo;render();};});
@@ -1186,58 +1268,68 @@ function bind(){
   Array.prototype.forEach.call(document.querySelectorAll("[data-edit-log]"),function(b){b.onclick=function(){
     var rec=state.logs.find(function(x){return x.id===b.dataset.editLog;});
     if(!rec)return;
-    editingId=rec.id;
+    rememberDraft();editingId=rec.id;editingPerson=rec.person;recordMode="detailed";
     state.active=rec.person;
     current="log";
     render();
   };});
 
 
-  Array.prototype.forEach.call(document.querySelectorAll("[data-quick]"),function(b){b.onclick=function(){draftLevel=Number(b.dataset.quick);current="log";render();};});
-  Array.prototype.forEach.call(document.querySelectorAll(".chips .chip"),function(b){b.onclick=function(){b.classList.toggle("on");};});
+  Array.prototype.forEach.call(document.querySelectorAll("[data-quick]"),function(b){b.onclick=function(){startRecord();draftLevel=Number(b.dataset.quick);render();};});
+  Array.prototype.forEach.call(document.querySelectorAll(".chips .chip"),function(b){b.onclick=function(){b.classList.toggle("on");b.closest(".chips").dataset.answered="true";rememberDraft();};});
 
   Array.prototype.forEach.call(document.querySelectorAll("[data-entry-choice]"),function(b){b.onclick=function(){
     var v=document.getElementById("entryTypeValue");if(v)v.value=b.dataset.entryChoice;
-    document.querySelectorAll(".entryChoice").forEach(function(x){x.classList.toggle("on",x===b);});
+    document.querySelectorAll(".entryChoice").forEach(function(x){x.classList.toggle("on",x===b);});rememberDraft();
   };});
   Array.prototype.forEach.call(document.querySelectorAll("[data-intensity]"),function(b){b.onclick=function(){
     var v=document.getElementById("levelSelect");if(v)v.value=b.dataset.intensity;
-    document.querySelectorAll("[data-intensity]").forEach(function(x){x.classList.toggle("on",x===b);});
+    document.querySelectorAll("[data-intensity]").forEach(function(x){x.classList.toggle("on",x===b);});rememberDraft();
   };});
   Array.prototype.forEach.call(document.querySelectorAll("[data-clear-chips]"),function(b){b.onclick=function(){
-    document.querySelectorAll('.chips[data-name="'+b.dataset.clearChips+'"] .chip').forEach(function(x){x.classList.remove("on");});
+    document.querySelectorAll('.chips[data-name="'+b.dataset.clearChips+'"] .chip').forEach(function(x){x.classList.remove("on");});var g=document.querySelector('.chips[data-name="'+b.dataset.clearChips+'"]');if(g){g.dataset.answered="true";g.dataset.retained="[]";}rememberDraft();
   };});
   Array.prototype.forEach.call(document.querySelectorAll("[data-step-target]"),function(b){b.onclick=function(){
     var el=document.getElementById(b.dataset.stepTarget);if(!el)return;
     var n=Number(el.value||0)+Number(b.dataset.step||0), min=Number(el.min||0), max=el.max!==""?Number(el.max):9999;
-    el.value=Math.max(min,Math.min(max,n));
+    el.value=Math.max(min,Math.min(max,n));rememberDraft();
   };});
   Array.prototype.forEach.call(document.querySelectorAll("[data-count-for]"),function(c){
     var el=document.querySelector('[name="'+c.dataset.countFor+'"]');if(!el)return;
     var draw=function(){c.textContent=(el.value||"").length+"/500";};draw();el.addEventListener("input",draw);
   });
-  var ceb=document.getElementById("cancelEditBtn");if(ceb)ceb.onclick=function(){editingId=null;current="timeline";render();};
+  var ceb=document.getElementById("cancelEditBtn");if(ceb)ceb.onclick=function(){rememberDraft();clearEditing();current="timeline";render();};
 
-  Array.prototype.forEach.call(document.querySelectorAll(".selectPerson"),function(b){b.onclick=function(){state.active=b.dataset.id;save();render();};});
+  Array.prototype.forEach.call(document.querySelectorAll(".selectPerson"),function(b){b.onclick=function(){changePerson(b.dataset.id);};});
   Array.prototype.forEach.call(document.querySelectorAll(".give"),function(b){b.onclick=function(){var m=state.meds.find(function(x){return x.id===b.dataset.id;}),d=new Date();if(!m)return;var ml={id:String(Date.now()),person:state.active,staff:staff()||"Not set",medId:m.id,name:m.name,dose:m.dose,type:b.dataset.type,ts:d.toISOString(),date:d.toISOString().slice(0,10)};state.medLogs.push(ml);audit("MEDICATION_ADMIN",m.name+" • "+b.dataset.type,ml.person);save();render();};});
-  var f=document.getElementById("logForm");if(f)f.onsubmit=function(e){e.preventDefault();var fd=new FormData(f),d=new Date(),existing=editingId?state.logs.find(function(x){return x.id===editingId;}):null;var rec={id:existing?existing.id:String(Date.now()),person:state.active,staff:staff()||"Not set",ts:existing?existing.ts:d.toISOString(),updatedTs:existing?d.toISOString():"",date:(existing?existing.ts:d.toISOString()).slice(0,10),type:fd.get("type"),level:Number(fd.get("level")),behaviours:selected("behaviours"),triggers:selected("triggers"),warningSigns:selected("warningSigns"),escalationRate:fd.get("escalationRate")||"Not recorded",recoveryState:fd.get("recoveryState")||"Not recorded",antecedent:fd.get("antecedent"),consequence:fd.get("consequence"),pain:Number(fd.get("pain")||0),sleep:fd.get("sleep"),interventions:selected("interventions"),outcome:fd.get("outcome"),injury:fd.get("injury")==="on",damage:fd.get("damage")==="on",restrictive:fd.get("restrictive")==="on",duration:Number(fd.get("duration")||0),recoveryMinutes:Number(fd.get("recoveryMinutes")||0),staffReflection:fd.get("staffReflection")||"",notes:fd.get("notes"),prnFollowFor:f.dataset.prnFollowFor||"",quick:existing?!!existing.quick:false};if(existing){var ix=state.logs.findIndex(function(x){return x.id===existing.id;});state.logs[ix]=rec;audit("EDIT_BEHAVIOUR",rec.type+" • "+levelName(rec.level),rec.person);}else{state.logs.push(rec);try{localStorage.removeItem("neuropattern-draft-"+state.active);}catch(e){}audit("SAVE_BEHAVIOUR",rec.type+" • "+levelName(rec.level),rec.person);}try{
-    localStorage.setItem(KEY,JSON.stringify(state));
-    var stored=JSON.parse(localStorage.getItem(KEY)||"null");
-    if(!stored||!stored.logs||!stored.logs.some(function(x){return x.id===rec.id;}))throw new Error("Record could not be verified in local storage.");
-    editingId=null;
-    current="timeline";
-    render();
-    alert(existing?"✓ Changes saved successfully":"✓ Record saved successfully");
-  }catch(err){
-    alert("Unable to save record: "+(err&&err.message?err.message:String(err))+". Please keep this screen open and do not clear app data.");
-  }
-};
-  var mf=document.getElementById("medForm");if(mf)mf.onsubmit=function(e){e.preventDefault();var fd=new FormData(mf);var med={id:String(Date.now()),person:state.active,name:fd.get("name"),dose:fd.get("dose"),schedule:fd.get("schedule"),kind:fd.get("kind")};state.meds.push(med);audit("ADD_MEDICATION",med.name);save();render();};
-  var pf=document.getElementById("personForm");if(pf)pf.onsubmit=function(e){e.preventDefault();var fd=new FormData(pf),id="p"+Date.now();state.people.push({id:id,name:fd.get("name"),baseline:fd.get("baseline"),communication:fd.get("communication"),warningProfile:fd.get("warningProfile")||"",factorProfile:"",helpfulApproaches:fd.get("helpfulApproaches")||"",avoidApproaches:"",sensoryNeeds:"",recoveryIndicators:"",riskNotes:fd.get("riskNotes")});state.active=id;audit("ADD_PROFILE",fd.get("name"),id);save();render();};
+  var f=document.getElementById("logForm");if(f)f.onsubmit=function(e){
+    e.preventDefault();
+    var id=f.dataset.recordId||"",existing=id?state.logs.find(function(x){return x.id===id;}):null;
+    if(!f.isConnected||f.dataset.person!==state.active||id!==(editingId||"")||(id&&(!existing||state.logs.filter(function(x){return x.id===id;}).length!==1||existing.person!==f.dataset.person||editingPerson!==existing.person))){
+      alert("This record or person changed. Reopen the correct record before saving.");return;
+    }
+    if(f.dataset.saving)return;f.dataset.saving="true";
+    try{
+      var fd=new FormData(f),d=new Date();
+      if(!existing&&!f.dataset.pendingId)f.dataset.pendingId=newRecordId();
+      rememberDraft();
+      var rec=Object.assign({},existing||{},{id:existing?existing.id:f.dataset.pendingId,person:f.dataset.person,staff:staff()||"Not set",ts:existing?existing.ts:d.toISOString(),updatedTs:existing?d.toISOString():"",date:existing?(existing.date||existing.ts.slice(0,10)):d.toISOString().slice(0,10),type:fd.get("type"),level:nullableNumber(fd.get("level")),behaviours:nullableChips("behaviours"),triggers:nullableChips("triggers"),warningSigns:nullableChips("warningSigns"),escalationRate:nullableSelect(fd.get("escalationRate")),recoveryState:nullableSelect(fd.get("recoveryState")),antecedent:nullableText(fd.get("antecedent")),consequence:nullableText(fd.get("consequence")),pain:nullableNumber(fd.get("pain")),sleep:nullableSelect(fd.get("sleep")),interventions:nullableChips("interventions"),outcome:nullableSelect(fd.get("outcome")),injury:safetyValue(f.elements.injury),damage:safetyValue(f.elements.damage),restrictive:safetyValue(f.elements.restrictive),duration:nullableNumber(fd.get("duration")),recoveryMinutes:nullableNumber(fd.get("recoveryMinutes")),staffReflection:nullableText(fd.get("staffReflection")),notes:nullableText(fd.get("notes")),prnFollowFor:f.dataset.prnFollowFor||"",quick:existing?!!existing.quick:recordMode==="quick"});
+      if(existing)state.logs[state.logs.indexOf(existing)]=rec;
+      else{
+        if(state.logs.some(function(x){return x.id===rec.id;})){alert("Draft record ID is already in use. Reopen a new record.");return;}
+        state.logs.push(rec);
+      }
+      audit(existing?"EDIT_BEHAVIOUR":"SAVE_BEHAVIOUR",rec.type+" • "+levelName(rec.level),rec.person);
+      save();clearLogDraft(f);clearEditing();current="timeline";render();
+      alert(existing?"✓ Changes saved successfully":"✓ Record saved successfully");
+    }catch(err){console.error("Record save failed",err);if(!err.neuropatternSaveReported)alert("Unable to save record: "+(err.message||String(err))+". Keep this form open and retry.");}finally{delete f.dataset.saving;}
+  };
+  var mf=document.getElementById("medForm");if(mf)mf.onsubmit=function(e){e.preventDefault();var fd=new FormData(mf);var med={id:String(Date.now()),person:state.active,name:fd.get("name"),dose:fd.get("dose"),schedule:fd.get("schedule"),kind:fd.get("kind")};state.meds.push(med);audit("ADD_MEDICATION",med.name);save(mf);render();};
+  var pf=document.getElementById("personForm");if(pf)pf.onsubmit=function(e){e.preventDefault();var fd=new FormData(pf),id="p"+Date.now();state.people.push({id:id,name:fd.get("name"),baseline:fd.get("baseline"),communication:fd.get("communication"),warningProfile:fd.get("warningProfile")||"",factorProfile:"",helpfulApproaches:fd.get("helpfulApproaches")||"",avoidApproaches:"",sensoryNeeds:"",recoveryIndicators:"",riskNotes:fd.get("riskNotes")});clearEditing();state.active=id;audit("ADD_PROFILE",fd.get("name"),id);save(pf);render();};
   var esb=document.getElementById("editSupportBtn"),sf=document.getElementById("supportForm");
   if(esb&&sf)esb.onclick=function(){sf.classList.toggle("open");esb.textContent=sf.classList.contains("open")?"Close editor":"Edit support profile";};
-  if(sf)sf.onsubmit=function(e){e.preventDefault();var fd=new FormData(sf),p=active();["baseline","communication","warningProfile","factorProfile","helpfulApproaches","avoidApproaches","sensoryNeeds","recoveryIndicators","riskNotes"].forEach(function(k){p[k]=fd.get(k)||"";});audit("UPDATE_SUPPORT_PROFILE","Personal support profile updated",p.id);save();render();};
-  var hf=document.getElementById("handoverForm");if(hf)hf.onsubmit=function(e){e.preventDefault();var fd=new FormData(hf);var h={id:String(Date.now()),person:state.active,staff:staff()||"Not set",ts:new Date().toISOString(),note:fd.get("note")};state.handovers.push(h);audit("SAVE_HANDOVER","Shift handover",h.person);save();render();showSavedToast("Handover saved ✓");};
+  if(sf)sf.onsubmit=function(e){e.preventDefault();var fd=new FormData(sf),p=active();["baseline","communication","warningProfile","factorProfile","helpfulApproaches","avoidApproaches","sensoryNeeds","recoveryIndicators","riskNotes"].forEach(function(k){p[k]=fd.get(k)||"";});audit("UPDATE_SUPPORT_PROFILE","Personal support profile updated",p.id);save(sf);render();};
+  var hf=document.getElementById("handoverForm");if(hf)hf.onsubmit=function(e){e.preventDefault();var fd=new FormData(hf);var h={id:String(Date.now()),person:state.active,staff:staff()||"Not set",ts:new Date().toISOString(),note:fd.get("note")};state.handovers.push(h);audit("SAVE_HANDOVER","Shift handover",h.person);save(hf);render();showSavedToast("Handover saved ✓");};
 
   var ss=document.getElementById("saveStaff"),si=document.getElementById("staffInitials");if(ss&&si)ss.onclick=function(){setStaffInitials(si.value);};
 
@@ -1250,7 +1342,7 @@ function bind(){
 
   Array.prototype.forEach.call(document.querySelectorAll("[data-report-days]"),function(b){b.onclick=function(){reportDays=Number(b.dataset.reportDays);state.settings.reportDays=reportDays;save();render();};});
   var rt=document.getElementById("reportTxtBtn");if(rt)rt.onclick=exportReportTxt;
-  var pfbtn=document.getElementById("prnFollowBtn");if(pfbtn)pfbtn.onclick=function(){draftLevel=null;current="log";render();var lf=document.getElementById("logForm");if(lf)lf.dataset.prnFollowFor=pfbtn.dataset.prn;};
+  var pfbtn=document.getElementById("prnFollowBtn");if(pfbtn)pfbtn.onclick=function(){startRecord("detailed");var lf=document.getElementById("logForm");if(lf){lf.dataset.prnFollowFor=pfbtn.dataset.prn;rememberDraft();}};
 
   var jb=document.getElementById("jsonBtn");if(jb)jb.onclick=exportJSON;
   var cb=document.getElementById("csvBtn");if(cb)cb.onclick=exportCSV;
@@ -1266,10 +1358,10 @@ function exportCSV(){audit("EXPORT_CSV","Behaviour CSV");save();
 }
 function importJSON(e){
   var file=e.target.files&&e.target.files[0];if(!file)return;
-  var reader=new FileReader();reader.onload=function(){try{var d=JSON.parse(reader.result);if(!d||!Array.isArray(d.people))throw new Error("Invalid");state=d;save();alert("Backup imported.");current="home";render();}catch(err){alert("That file is not a valid NeuroPattern backup.");}};reader.readAsText(file);
+  var reader=new FileReader();reader.onload=function(){try{var d=JSON.parse(reader.result);if(!d||!Array.isArray(d.people))throw new Error("Invalid");rememberDraft();state=d;save();clearEditing();alert("Backup imported.");current="home";render();}catch(err){if(!err.neuropatternSaveReported)alert("That file is not a valid NeuroPattern backup.");}};reader.readAsText(file);
 }
 function resetData(){try{[KEY].concat(OLD_KEYS).forEach(function(k){localStorage.removeItem(k);});}catch(e){}location.reload();}
-var legacyQuickAdd=document.getElementById("quickAdd");if(legacyQuickAdd)legacyQuickAdd.onclick=function(){editingId=null;draftLevel=null;current="log";render();};
+var legacyQuickAdd=document.getElementById("quickAdd");if(legacyQuickAdd)legacyQuickAdd.onclick=function(){startRecord();};
 render();
 (function(){
   var sp=document.getElementById("v11Splash");
@@ -1354,7 +1446,7 @@ function enhanceA11y(){
     b.setAttribute('aria-pressed', b.classList.contains('on')?'true':'false');
   });
   document.querySelectorAll('button').forEach(function(b){
-    if(!b.getAttribute('type')) b.setAttribute('type','button');
+    if(!b.getAttribute('type')&&!b.closest('form')) b.setAttribute('type','button');
     if(!b.getAttribute('aria-label') && b.textContent.trim()) b.setAttribute('aria-label',b.textContent.trim());
   });
   var q=document.querySelector('.quickRecord'); if(q) q.setAttribute('aria-label','Create a new record');
@@ -1369,8 +1461,9 @@ new MutationObserver(enhanceA11y).observe(document.documentElement,{childList:tr
 /* Conservative draft protection: stores form field values only, never changes clinical records. */
 function collectDraft(){
   var form=document.querySelector('form');
-  if(!form) return null;
-  var obj={savedAt:Date.now(),path:(location.hash||''),fields:{}};
+  if(!form || form.id==='logForm') return null;
+  var person=document.getElementById('personQuickSwitch');
+  var obj={savedAt:Date.now(),path:(location.hash||''),formId:form.id,person:person?person.value:'',fields:{}};
   form.querySelectorAll('input,select,textarea').forEach(function(el){
     if(!el.name && !el.id) return;
     var k=el.name||el.id;
@@ -1382,29 +1475,21 @@ function collectDraft(){
 document.addEventListener('input',function(){
   clearTimeout(draftTimer);
   draftTimer=setTimeout(function(){
-    try{var d=collectDraft(); if(d) sessionStorage.setItem('np-v13-form-draft',JSON.stringify(d));}catch(e){}
+    try{var d=collectDraft(); if(d) sessionStorage.setItem('np-v13-form-draft',JSON.stringify(d));}catch(e){console.error('Draft storage failed',e);toast('Draft storage failed — keep this form open.');}
   },500);
 });
 document.addEventListener('change',function(){
   clearTimeout(draftTimer);
   draftTimer=setTimeout(function(){
-    try{var d=collectDraft(); if(d) sessionStorage.setItem('np-v13-form-draft',JSON.stringify(d));}catch(e){}
+    try{var d=collectDraft(); if(d) sessionStorage.setItem('np-v13-form-draft',JSON.stringify(d));}catch(e){console.error('Draft storage failed',e);toast('Draft storage failed — keep this form open.');}
   },300);
 });
 
-/* Clear temporary draft after obvious save actions. */
-document.addEventListener('click',function(e){
-  var b=e.target.closest&&e.target.closest('button,.btn');
-  if(!b)return;
-  var t=(b.textContent||'').trim().toLowerCase();
-  if(t==='save'||t.indexOf('save ')===0||t.indexOf('record medication')>=0){
-    setTimeout(function(){try{sessionStorage.removeItem('np-v13-form-draft')}catch(e){}},800);
-  }
-});
+/* Draft cleanup is performed by save(form), after verified persistence. */
 
 /* Warn only when a form appears to contain unsaved typed content. */
 window.addEventListener('beforeunload',function(e){
-  var d=null; try{d=sessionStorage.getItem('np-v13-form-draft')}catch(x){}
+  var d=null; try{d=sessionStorage.getItem('np-v13-form-draft');if(document.getElementById('logForm'))d=d||sessionStorage.getItem('np-v13-log-draft-'+document.getElementById('logForm').dataset.person+'-'+(document.getElementById('logForm').dataset.recordId||'new'));}catch(x){}
   if(!d)return;
   e.preventDefault(); e.returnValue='';
 });
