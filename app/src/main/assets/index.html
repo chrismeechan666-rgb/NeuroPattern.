@@ -598,15 +598,34 @@ function chipValues(name){var g=document.querySelector('.chips[data-name="'+name
 function nullableChips(name){var group=document.querySelector('.chips[data-name="'+name+'"]');return group&&group.dataset.answered==="true"?chipValues(name):null;}
 function safetyValue(el){return el.dataset.answer===""?null:el.dataset.answer==="true";}
 function draftKey(form){return "neuropattern-draft-"+form.dataset.person+(form.dataset.recordId?"-edit-"+form.dataset.recordId:"");}
-function collectLogDraft(form){
-  var d={version:2,person:form.dataset.person,recordId:form.dataset.recordId||"",savedAt:Date.now(),fields:{},chips:{},answers:{},mode:recordMode,prnFollowFor:form.dataset.prnFollowFor||"",pendingId:form.dataset.pendingId||""};
-  Array.prototype.forEach.call(form.elements,function(el){if(el.name)d.fields[el.name]=el.type==="checkbox"?el.checked:el.value;});
-  form.querySelectorAll('.chips').forEach(function(g){d.chips[g.dataset.name]=chipValues(g.dataset.name);d.answers[g.dataset.name]=g.dataset.answered||"";});
-  form.querySelectorAll('input[type="checkbox"]').forEach(function(el){d.answers[el.name]=el.dataset.answer||"";});
-  return d;
+function logFormValues(form){
+  var values={fields:{},chips:{},answers:{}};
+  Array.prototype.forEach.call(form.elements,function(el){if(el.name)values.fields[el.name]=el.type==="checkbox"?el.checked:String(el.value==null?"":el.value);});
+  form.querySelectorAll('.chips').forEach(function(g){values.chips[g.dataset.name]=chipValues(g.dataset.name);values.answers[g.dataset.name]=g.dataset.answered||"";});
+  form.querySelectorAll('input[type="checkbox"]').forEach(function(el){values.answers[el.name]=el.dataset.answer||"";});
+  return values;
 }
+function changedLogFields(form){
+  var before=form.editBaseline,now=logFormValues(form),changed=[];if(!before)return changed;
+  Object.keys(now.fields).forEach(function(k){if(JSON.stringify(now.fields[k])!==JSON.stringify(before.fields[k])||now.answers[k]!==before.answers[k])changed.push(k);});
+  Object.keys(now.chips).forEach(function(k){if(JSON.stringify(now.chips[k])!==JSON.stringify(before.chips[k])||now.answers[k]!==before.answers[k])changed.push(k);});
+  return changed;
+}
+function collectLogDraft(form){
+  return Object.assign({version:3,person:form.dataset.person,recordId:form.dataset.recordId||"",savedAt:Date.now(),mode:recordMode,prnFollowFor:form.dataset.prnFollowFor||"",pendingId:form.dataset.pendingId||""},logFormValues(form),form.dataset.recordId?{changes:changedLogFields(form),baseRecord:form.editRecord}:{});
+}
+function retainEditDraft(form,draft){
+  try{
+    var json=JSON.stringify(draft),key=draftKey(form)+"-retained-"+String(draft.savedAt||Date.now());
+    var previous=localStorage.getItem(key),suffix=0;
+    while(previous&&previous!==json){key=draftKey(form)+"-retained-"+String(draft.savedAt||0)+"-"+(++suffix);previous=localStorage.getItem(key);}
+    localStorage.setItem(key,json);if(localStorage.getItem(key)!==json)throw new Error("Retained draft could not be verified.");
+  }catch(e){form.dataset.draftPreservationFailed="true";console.error("Older draft retention failed",e);}
+  form.dataset.draftNotice="true";
+}
+
 function rememberDraft(){
-  var form=document.getElementById("logForm");if(!form)return;
+  var form=document.getElementById("logForm");if(!form||form.dataset.draftPreservationFailed)return;
   var json=JSON.stringify(collectLogDraft(form)),errors=[];
   try{localStorage.setItem(draftKey(form),json);}catch(e){errors.push(e);}
   try{sessionStorage.setItem(sessionDraftKey(form),json);}catch(e){errors.push(e);}
@@ -616,24 +635,36 @@ function restoreLogDraft(form){
   var candidates=[];
   [function(){return localStorage.getItem(draftKey(form));},function(){return sessionStorage.getItem(sessionDraftKey(form));},function(){return sessionStorage.getItem("np-v13-form-draft");}].forEach(function(read){
     try{var d=JSON.parse(read()||"null");if(!d)return;
-      if(d.version===2){if(d.person===form.dataset.person&&(d.recordId||"")===(form.dataset.recordId||"")){
+      if(d.version===2||d.version===3){if(d.person===form.dataset.person&&(d.recordId||"")===(form.dataset.recordId||"")){
         if(!d.recordId&&d.pendingId&&state.logs.some(function(x){return x.id===d.pendingId;}))return;
+        if(d.recordId&&(d.version!==3||!Array.isArray(d.changes)||!d.baseRecord||d.baseRecord.id!==d.recordId||d.baseRecord.person!==d.person)){retainEditDraft(form,d);return;}
         candidates.push(d);
       }}
       else if(!d.fields&&!form.dataset.recordId)candidates.push({fields:d,savedAt:0});
       // Unscoped legacy session drafts cannot safely be assigned to a person or record.
     }catch(e){console.error("Draft could not be read",e);}
   });
-  candidates.sort(function(a,b){return (a.savedAt||0)-(b.savedAt||0);});
-  candidates.forEach(function(d){
-    Object.keys(d.fields||{}).forEach(function(k){var el=form.elements[k];if(!el)return;if(el.type==="checkbox")el.checked=!!d.fields[k];else el.value=d.fields[k]==null?"":d.fields[k];});
-    Object.keys(d.chips||{}).forEach(function(k){var g=form.querySelector('.chips[data-name="'+k+'"]');if(!g||!Array.isArray(d.chips[k]))return;var known=Array.prototype.map.call(g.querySelectorAll(".chip"),function(b){return b.dataset.v;});g.dataset.retained=JSON.stringify(d.chips[k].filter(function(v){return known.indexOf(v)===-1;}));g.querySelectorAll('.chip').forEach(function(b){b.classList.toggle("on",d.chips[k].indexOf(b.dataset.v)!==-1);});});
-    Object.keys(d.answers||{}).forEach(function(k){var el=form.elements[k],g=form.querySelector('.chips[data-name="'+k+'"]');if(el&&el.type==="checkbox")el.dataset.answer=d.answers[k];else if(g)g.dataset.answered=d.answers[k];});
-    if(d.mode)applyRecordMode(d.mode);form.dataset.prnFollowFor=d.prnFollowFor||"";form.dataset.pendingId=d.pendingId||"";
-  });
+  candidates.sort(function(a,b){return (b.savedAt||0)-(a.savedAt||0);});
+  var d=candidates[0];
+  if(d){
+    var allowed=null;
+    if(form.dataset.recordId){
+      allowed=d.changes.filter(function(k){return form.editRecord&&JSON.stringify(d.baseRecord[k])===JSON.stringify(form.editRecord[k]);});
+      if(allowed.length!==d.changes.length)retainEditDraft(form,d);
+    }
+    function accepts(k){return !allowed||allowed.indexOf(k)!==-1;}
+    Object.keys(d.fields||{}).forEach(function(k){if(!accepts(k))return;var el=form.elements[k];if(!el)return;if(el.type==="checkbox")el.checked=!!d.fields[k];else setLogFieldValue(el,d.fields[k]);});
+    Object.keys(d.chips||{}).forEach(function(k){if(!accepts(k))return;var g=form.querySelector('.chips[data-name="'+k+'"]');if(!g||!Array.isArray(d.chips[k]))return;var known=Array.prototype.map.call(g.querySelectorAll(".chip"),function(b){return b.dataset.v;});g.dataset.retained=JSON.stringify(d.chips[k].filter(function(v){return known.indexOf(v)===-1;}));g.querySelectorAll('.chip').forEach(function(b){b.classList.toggle("on",d.chips[k].indexOf(b.dataset.v)!==-1);});});
+    Object.keys(d.answers||{}).forEach(function(k){if(!accepts(k))return;var el=form.elements[k],g=form.querySelector('.chips[data-name="'+k+'"]');if(el&&el.type==="checkbox")el.dataset.answer=d.answers[k];else if(g)g.dataset.answered=d.answers[k];});
+    if(d.mode)applyRecordMode(d.mode);
+    if(!form.dataset.recordId){form.dataset.prnFollowFor=d.prnFollowFor||"";form.dataset.pendingId=d.pendingId||"";}
+  }
   syncLogChoices(form);
+  if(form.dataset.draftNotice)alert("Some older draft changes could not be restored safely. The saved record was kept and the older draft was retained for review.");
 }
+
 function clearLogDraft(form){
+  if(form.dataset.draftPreservationFailed)return;
   try{localStorage.removeItem(draftKey(form));}catch(e){console.error("Saved draft cleanup failed",e);}
   try{sessionStorage.removeItem(sessionDraftKey(form));var d=JSON.parse(sessionStorage.getItem("np-v13-form-draft")||"null");if(d&&d.person===form.dataset.person&&(d.recordId||"")===(form.dataset.recordId||""))sessionStorage.removeItem("np-v13-form-draft");}catch(e){console.error("Saved session draft cleanup failed",e);}
 }
@@ -1023,17 +1054,24 @@ function quickSaveLevel(level){
   var d=new Date(),rec={id:newRecordId(),person:state.active,staff:staff()||"Not set",ts:d.toISOString(),date:d.toISOString().slice(0,10),type:"Observation",level:Number(level),behaviours:null,triggers:null,antecedent:null,consequence:null,pain:null,sleep:null,interventions:null,outcome:null,injury:null,damage:null,restrictive:null,duration:null,warningSigns:null,escalationRate:null,recoveryState:null,recoveryMinutes:null,staffReflection:null,notes:null,quick:true};
   rememberDraft();state.logs.push(rec);audit("QUICK_OBSERVATION",levelName(level),rec.person);save();quickLastId=rec.id;render();showQuickToast(rec);
 }
+function setLogFieldValue(el,value){
+  value=value==null?"":String(value);
+  if(el.tagName==="SELECT"&&value&&!Array.prototype.some.call(el.options,function(o){return o.value===value;})){
+    var option=document.createElement("option");option.value=value;option.textContent=value;el.appendChild(option);
+  }
+  el.value=value;
+}
 function editFormSelections(rec){
   if(!rec)return;
   var f=document.getElementById("logForm");if(!f)return;
   ["type","level","antecedent","consequence","pain","sleep","outcome","duration","notes","escalationRate","recoveryState","recoveryMinutes","staffReflection"].forEach(function(n){
     var el=f.elements[n];if(!el)return;
-    if(rec[n]!=null)el.value=rec[n];else if(el.tagName!=="SELECT")el.value="";
+    if(rec[n]!=null)setLogFieldValue(el,rec[n]);else if(el.tagName!=="SELECT")el.value="";
   });
   ["injury","damage","restrictive"].forEach(function(n){var el=f.elements[n];if(!el)return;var v=rec[n];el.checked=v===true||v==="Yes";el.dataset.answer=v==null?"":String(el.checked);});
   ["behaviours","triggers","interventions","warningSigns"].forEach(function(n){var g=f.querySelector('.chips[data-name="'+n+'"]');if(!g)return;g.dataset.answered=rec[n]==null?"":"true";var known=Array.prototype.map.call(g.querySelectorAll(".chip"),function(b){return b.dataset.v;});g.dataset.retained=JSON.stringify((rec[n]||[]).filter(function(v){return known.indexOf(v)===-1;}));g.querySelectorAll('.chip').forEach(function(b){b.classList.toggle("on",(rec[n]||[]).indexOf(b.dataset.v)!==-1);});});
   f.dataset.prnFollowFor=rec.prnFollowFor||"";
-  syncLogChoices(f);
+  syncLogChoices(f);f.editRecord=clone(rec);f.editBaseline=logFormValues(f);
 }
 
 function hashPin(v){
@@ -1314,7 +1352,15 @@ function bind(){
       if(!existing&&!f.dataset.pendingId)f.dataset.pendingId=newRecordId();
       rememberDraft();
       var rec=Object.assign({},existing||{},{id:existing?existing.id:f.dataset.pendingId,person:f.dataset.person,staff:staff()||"Not set",ts:existing?existing.ts:d.toISOString(),updatedTs:existing?d.toISOString():"",date:existing?(existing.date||existing.ts.slice(0,10)):d.toISOString().slice(0,10),type:fd.get("type"),level:nullableNumber(fd.get("level")),behaviours:nullableChips("behaviours"),triggers:nullableChips("triggers"),warningSigns:nullableChips("warningSigns"),escalationRate:nullableSelect(fd.get("escalationRate")),recoveryState:nullableSelect(fd.get("recoveryState")),antecedent:nullableText(fd.get("antecedent")),consequence:nullableText(fd.get("consequence")),pain:nullableNumber(fd.get("pain")),sleep:nullableSelect(fd.get("sleep")),interventions:nullableChips("interventions"),outcome:nullableSelect(fd.get("outcome")),injury:safetyValue(f.elements.injury),damage:safetyValue(f.elements.damage),restrictive:safetyValue(f.elements.restrictive),duration:nullableNumber(fd.get("duration")),recoveryMinutes:nullableNumber(fd.get("recoveryMinutes")),staffReflection:nullableText(fd.get("staffReflection")),notes:nullableText(fd.get("notes")),prnFollowFor:f.dataset.prnFollowFor||"",quick:existing?!!existing.quick:recordMode==="quick"});
-      if(existing)state.logs[state.logs.indexOf(existing)]=rec;
+      if(existing){
+        if(!f.editBaseline||!f.editRecord)throw new Error("The saved record was not loaded for editing. Reopen it before saving.");
+        var changes=changedLogFields(f),updated=Object.assign({},existing,{updatedTs:d.toISOString(),updatedStaff:staff()||"Not set"});
+        changes.forEach(function(k){
+          if(JSON.stringify(existing[k])!==JSON.stringify(f.editRecord[k]))throw new Error("This record changed after editing began. Reopen it before saving.");
+          if(Object.prototype.hasOwnProperty.call(rec,k))updated[k]=rec[k];
+        });
+        rec=updated;state.logs[state.logs.indexOf(existing)]=rec;
+      }
       else{
         if(state.logs.some(function(x){return x.id===rec.id;})){alert("Draft record ID is already in use. Reopen a new record.");return;}
         state.logs.push(rec);
