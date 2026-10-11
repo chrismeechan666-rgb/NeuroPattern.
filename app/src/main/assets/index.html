@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NeuroPattern</title>
 <style>
 :root{
@@ -579,6 +579,40 @@ body.dark #logForm .smartSection,body.dark #logForm .formSection{background:var(
 body.dark #logForm .chip.on{color:#d3fff2;border-color:#8dd9c7}
 @media(max-width:390px){#logForm .intensityGrid{grid-template-columns:repeat(3,minmax(0,1fr))}#logForm .intensityCard b{font-size:13px}#logForm .intensityCard small{display:block}}
 </style>
+<style id="v131-ui-polish">
+#logForm .intensityGrid{grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+#logForm .intensityCard{min-height:78px;padding:9px 3px;border-radius:15px;min-width:0}
+#logForm .intensityCard .face{font-size:22px;margin-bottom:4px}
+#logForm .intensityCard b{font-size:11px;line-height:1.3;white-space:normal}
+#logForm .smartSection{margin:8px 0;border-radius:14px}
+#logForm .smartSection summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:10px 14px;list-style:none}
+#logForm .smartSection summary::-webkit-details-marker{display:none}
+#logForm .smartSection summary::after{content:"";width:8px;height:8px;flex-shrink:0;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);margin-right:3px}
+#logForm .smartSection[open]{border-color:var(--teal)}
+#logForm .smartSection[open] summary::after{transform:rotate(45deg)}
+#logForm .smartSectionContent{padding:12px 14px}
+#logForm .smartField{margin-bottom:12px}
+#logForm.quickRecordMode .quickEssential summary{display:none}
+.medicationCard{background:#edf8f3;border:1px solid #bce7d0;color:var(--ink)}
+.medicationCard .profile{flex-wrap:wrap;gap:12px}.medicationCard .profile>div:first-child{min-width:0;flex:1 1 150px;overflow-wrap:anywhere}
+.medicationCard .medType{background:#dff5e9;color:#174d42;border:1px solid #9bceba;white-space:normal}
+.medicationCard.prnMedication,.prnFollow{background:#fff3d6;border:1px solid #d9bb73}
+.prnMedication .medType{background:#ffedb9;color:#624600;border-color:#cfaf60}
+.medicationCard .give{min-height:48px;white-space:normal;font-size:13px}
+.medicationCard .give[data-type="Regular"],#medForm .primary{background:#176b68;color:#fff;border:1px solid #176b68}
+.medicationCard .give[data-type="PRN"],.prnFollow .primary,#medForm.prnMedication .primary{background:#805407;color:#fff;border:1px solid #805407}
+#medForm select{border-color:#76b7a8}
+#medForm.prnMedication select{border-color:#a98747}
+.medicationCard button:focus-visible,#medForm button:focus-visible,.prnFollow button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+body.dark .medicationCard{background:#173c35;border-color:#487f6d}
+body.dark .medicationCard .medType{background:#214c40;color:#d3fff0;border-color:#669d85}
+body.dark .medicationCard.prnMedication,body.dark .prnFollow{background:#342914;border-color:#8a6831}
+body.dark .prnMedication .medType{background:#493716;color:#ffe7ad;border-color:#a98747}
+body.dark .medicationCard .give[data-type="Regular"],body.dark #medForm .primary{background:#84d5bc;color:#123b32;border-color:#84d5bc}
+body.dark .medicationCard .give[data-type="PRN"],body.dark .prnFollow .primary,body.dark #medForm.prnMedication .primary{background:#e8bd64;color:#302007;border-color:#e8bd64}
+@media(max-width:390px){#logForm .intensityGrid{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}#logForm .intensityCard{min-height:72px}#logForm .intensityCard b{font-size:10px}}
+@media(max-width:360px){.medicationCard .grid2{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <div id="v11Splash" class="v11Splash"><div><div class="neuroAnim"><div class="node n1"></div><div class="node n2"></div><div class="node n3"></div><div class="node n4"></div><div class="node n5"></div><div class="node n6"></div><div class="neuroCore">N</div></div><div class="splashWords"><b>NeuroPattern</b><span>connecting the record</span></div></div></div>
@@ -863,7 +897,7 @@ function homeView(){
     '<div class="homeHero"><h1>Overview</h1><p>'+esc(active().name)+' • today at a glance</p></div>'+
     '<div class="todayStrip"><div class="todayMini"><b>'+all.filter(function(x){return x.date===todayKey();}).length+'</b><small>records today</small></div><div class="todayMini"><b>'+all.filter(function(x){return x.date===todayKey()&&Number(x.level)>=3;}).length+'</b><small>high intensity</small></div><div class="todayMini"><b>'+ml.filter(function(x){return (x.date||String(x.ts||"").slice(0,10))===todayKey();}).length+'</b><small>medications</small></div></div>'+
     '<div class="statusPanel"><h3>How are they right now?</h3><div class="sub">Tap once to save a quick observation. You can add details afterwards.</div><div class="statusRow">'+
-      [0,1,2,3,4].map(function(i){return '<button class="statusBtn" data-level="'+i+'"><span>'+faces[i]+'</span><b>'+names[i]+'</b><small>Level '+i+'</small></button>';}).join("")+
+      [0,1,2,3,4].map(function(i){return '<button class="statusBtn" data-level="'+i+'"><span>'+faces[i]+'</span><b>'+names[i]+'</b></button>';}).join("")+
     '</div></div>'+
     '<div class="homeActions"><button class="homeAction" data-go="log">＋ Full record<span>Behaviour or incident</span></button><button class="homeAction" data-go="early">⚠ Early warning<span>Signs & escalation</span></button><button class="homeAction" data-go="meds">💊 Medication<span>Administration</span></button></div>'+
     '<div class="earlyHome"><h3>⚠ Early Warning & Escalation</h3><p>Capture observable changes before, during and after escalation.</p><div class="earlyStats"><div class="earlyStat"><b>'+all.filter(function(x){return (x.warningSigns||[]).length;}).length+'</b><small>warning-sign records</small></div><div class="earlyStat"><b>'+all.filter(function(x){return x.escalationRate&&x.escalationRate!=="Not recorded";}).length+'</b><small>escalations tracked</small></div><div class="earlyStat"><b>'+all.filter(function(x){return Number(x.recoveryMinutes||0)>0;}).length+'</b><small>recoveries timed</small></div></div></div>'+
@@ -897,10 +931,9 @@ function logView(){
     '</div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Intensity</h3><p>Select the highest level observed.</p></div></div>'+
       '<input type="hidden" name="level" id="levelSelect" value="'+String(er&&er.level!=null?Number(er.level):"")+'">'+
-      '<div class="intensityGrid">'+faces.map(function(face,i){return '<button type="button" class="intensityCard '+((er&&er.level!=null?Number(er.level):null)===i?"on":"")+'" aria-pressed="'+((er&&er.level!=null?Number(er.level):null)===i?'true':'false')+'" data-intensity="'+i+'"><span class="face">'+face+'</span><b>'+labels[i]+'</b><small>Level '+i+'</small></button>';}).join("")+'</div>'+
+      '<div class="intensityGrid">'+faces.map(function(face,i){return '<button type="button" class="intensityCard '+((er&&er.level!=null?Number(er.level):null)===i?"on":"")+'" aria-pressed="'+((er&&er.level!=null?Number(er.level):null)===i?'true':'false')+'" data-intensity="'+i+'" aria-label="'+labels[i]+' intensity"><span class="face" aria-hidden="true">'+face+'</span><b>'+labels[i]+'</b></button>';}).join("")+'</div>'+
     '</div>'+
     '<input type="hidden" name="pain" value="" aria-label="Historical pain score">'+
-    logSection('behaviour','Behaviour',logChips('behaviours','Select all observed behaviours',behaviours),true)+
     logSection('context','Context',
       logChips('triggers','Possible factors (association, not causation)',triggers)+
       logText('antecedent','What happened immediately before?','Factual context before the event...',true)+
@@ -908,14 +941,15 @@ function logView(){
       logSelect('painObservation','Pain / Discomfort Observation',painObservations.map(function(v){return '<option value="'+(v==='Unable to assess'?'':esc(v))+'"'+(v==='Unable to assess'?' selected':'')+'>'+esc(v)+'</option>';}).join(''),true)+
       '<p class="legacyPain quickOptional" id="legacyPainDisplay" hidden></p>'+
       '<div class="quickOptional">'+logChips('painIndicators','Optional observable indicators',painIndicators)+'</div>',true)+
+    logSection('behaviour','Behaviour',logChips('behaviours','Select all observed behaviours',behaviours),true)+
     logSection('earlyWarning','Early Warning',logChips('warningSigns','Observable early changes',warningSigns),false)+
-    logSection('response','Escalation &amp; Response',
+    logSection('response','Escalation',
       logSelect('escalationStage','Escalation stage', '<option value="">Not assessed / Unclear</option>'+escalationStages.map(function(stage,i){return '<option value="'+(i+1)+'">'+esc(stage.label)+'</option>';}).join(''))+
       '<div class="stageGuidance" id="stageGuidance" role="status" aria-live="polite"></div><p class="stageDisclaimer">Informational guidance only. This is not an automatic clinical decision or authorisation for restrictive intervention. Follow the individual’s approved plan and local emergency procedures.</p>'+
-      logSelect('escalationRate','Escalation speed',plainOptions(escalationRates))+
+      logSelect('escalationRate','Escalation speed',plainOptions(escalationRates)),false)+
+    logSection('outcome','Response and Outcome',
       logChips('interventions','Support / de-escalation provided',interventions)+
-      logText('consequence','What happened immediately after?','Response and observable changes...',false),false)+
-    logSection('outcome','Outcome &amp; Safety',
+      logText('consequence','What happened immediately after?','Response and observable changes...',false)+
       logSelect('outcome','Outcome',plainOptions(['Not known','Much calmer','Somewhat calmer','No change','More agitated']))+
       logSelect('recoveryState','Recovery state',plainOptions(recoveryStates))+
       logNumber('recoveryMinutes','Recovery time (minutes)')+
@@ -990,11 +1024,11 @@ function lastGivenFor(name){
 function medsView(){
   var list=state.meds.filter(function(m){return m.person===state.active;}), recent=medsMine().slice().sort(function(a,b){return new Date(b.ts)-new Date(a.ts);}).slice(0,8);
   var html=v8Header()+'<h1 class="h1">Medication</h1><div class="p">Record actual administration time for regular and PRN medication.</div>';
-  html+=list.length?list.map(function(m){return '<div class="card"><div class="profile"><div><b>'+esc(m.name)+'</b><div class="muted">'+esc(m.dose||"")+' • '+esc(m.schedule||"No schedule entered")+'</div><div class="lastGiven">Last given: '+esc(lastGivenFor(m.name))+'</div></div><span class="medType">'+esc(m.kind||"Regular")+'</span></div><div class="grid2"><button class="btn secondary give" data-id="'+esc(m.id)+'" data-type="Regular">Record regular dose</button><button class="btn secondary give" data-id="'+esc(m.id)+'" data-type="PRN">Record PRN dose</button></div></div>';}).join(""):card('<div class="empty">No medications added yet.</div>');
-  html+='<div class="h2">Add medication</div><form id="medForm"><input class="inp" name="name" placeholder="Medication name" required><div class="grid2"><input class="inp" name="dose" placeholder="Dose"><input class="inp" name="schedule" placeholder="Time e.g. 20:00"></div><select name="kind"><option>Regular</option><option>PRN</option></select><button class="btn primary">Add medication</button></form>';
-  if(recent.length){html+='<div class="h2">Recent administrations</div>'+recent.map(function(x){return card('<div class="profile"><div><b>'+esc(x.name)+'</b><div class="muted">'+new Date(x.ts).toLocaleString()+' • '+esc(x.type)+'</div></div><div>'+esc(x.dose||"")+'</div>');}).join("");}
+  html+=list.length?list.map(function(m){return '<div class="card medicationCard '+(m.kind==='PRN'?'prnMedication':'regularMedication')+'"><div class="profile"><div><b>'+esc(m.name)+'</b><div class="muted">'+esc(m.dose||"")+' • '+esc(m.schedule||"No schedule entered")+'</div><div class="lastGiven">Last given: '+esc(lastGivenFor(m.name))+'</div></div><span class="medType">'+esc(m.kind==='PRN'?'PRN — As required':m.kind||'Regular')+'</span></div><div class="grid2"><button class="btn secondary give" data-id="'+esc(m.id)+'" data-type="Regular">Record regular dose</button><button class="btn secondary give" data-id="'+esc(m.id)+'" data-type="PRN">Record PRN dose</button></div></div>';}).join(""):card('<div class="empty">No medications added yet.</div>');
+  html+='<div class="h2">Add medication</div><form id="medForm"><input class="inp" name="name" placeholder="Medication name" required><div class="grid2"><input class="inp" name="dose" placeholder="Dose"><input class="inp" name="schedule" placeholder="Time e.g. 20:00"></div><select name="kind" aria-label="Medication type"><option value="Regular">Regular</option><option value="PRN">PRN — As required</option></select><button class="btn primary">Add medication</button></form>';
+  if(recent.length){html+='<div class="h2">Recent administrations</div>'+recent.map(function(x){return '<div class="card medicationCard '+(x.type==='PRN'?'prnMedication':'regularMedication')+'">'+'<div class="profile"><div><b>'+esc(x.name)+'</b><div class="muted">'+new Date(x.ts).toLocaleString()+' • '+esc(x.type==='PRN'?'PRN — As required':x.type)+'</div></div><div>'+esc(x.dose||"")+'</div></div></div>';}).join("");}
   var pp=pendingPrn();
-  if(pp)html+='<div class="h2">PRN follow-up</div><div class="prnFollow"><b>'+esc(pp.name)+' PRN recorded '+new Date(pp.ts).toLocaleString()+'</b><div class="p">Record a follow-up observation when clinically appropriate so the timeline can compare what was recorded before and after the PRN.</div><button class="btn primary" id="prnFollowBtn" data-prn="'+esc(pp.id)+'">Record follow-up</button></div>';
+  if(pp)html+='<div class="h2">PRN follow-up</div><div class="prnFollow"><b>'+esc(pp.name)+' PRN — As required · recorded '+new Date(pp.ts).toLocaleString()+'</b><div class="p">Record a follow-up observation when clinically appropriate so the timeline can compare what was recorded before and after the PRN.</div><button class="btn primary" id="prnFollowBtn" data-prn="'+esc(pp.id)+'">Record follow-up</button></div>';
   return html;
 }
 function supportVal(p,key){return (p&&p[key])?p[key]:"Not yet recorded";}
@@ -1056,7 +1090,7 @@ function settingsView(){
     (state.settings.pinEnabled?'<button class="btn secondary" id="lockNowBtn">Lock now</button><button class="btn secondary" id="disablePinBtn">Disable PIN</button>':'')+
   '</div></div>'+
   '<div class="card"><div class="settingsGroup"><h3>Demo mode</h3><div class="settingsRow"><div class="copy"><b>Fictional demonstration data</b><small>Useful for screenshots, training and promotion without using a real person’s information.</small></div><button class="btn secondary" id="demoBtn">'+(state.settings.demoMode?'Clear demo':'Load demo')+'</button></div></div></div>'+
-  '<div class="card"><div class="settingsGroup"><h3>Release information</h3><div class="aboutGrid"><div class="card"><b>V13.0.1</b><span class="tiny">app version</span></div><div class="card"><b>Local</b><span class="tiny">data storage</span></div></div><div class="p">NeuroPattern is designed for structured recording and pattern review. This build remains a local-device release candidate, not a managed clinical records system.</div></div></div>'+
+  '<div class="card"><div class="settingsGroup"><h3>Release information</h3><div class="aboutGrid"><div class="card"><b>V13.1</b><span class="tiny">app version</span></div><div class="card"><b>Local</b><span class="tiny">data storage</span></div></div><div class="p">NeuroPattern is designed for structured recording and pattern review. This build remains a local-device release candidate, not a managed clinical records system.</div></div></div>'+
 
   '<div class="card"><div class="settingsGroup"><h3>Staff accounts</h3><div class="p">Local staff logins automatically attribute records to the signed-in user.</div>'+
   (canManageUsers()?'<form id="addStaffForm"><div class="grid2"><div class="field"><div class="label">Name</div><input class="inp" name="name" required></div><div class="field"><div class="label">Initials / ID</div><input class="inp" name="initials" maxlength="8" required></div></div><div class="grid2"><div class="field"><div class="label">PIN</div><input class="inp" name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,6}" required></div><div class="field"><div class="label">Role</div><select name="role"><option>Staff</option><option>Senior/Manager</option><option>Admin</option></select></div></div><button class="btn secondary">Add staff account</button></form>':'<div class="muted">Only an Admin can add or disable staff accounts.</div>')+
@@ -1347,7 +1381,7 @@ function v125RecordControls(){
  return '<button class="quickRecord" id="quickRecordBtn">＋ Record</button><div class="recordMenu" id="recordMenu"><button data-record-go="log">📝 Observation / incident</button><button data-record-go="early">⚠️ Early warning</button><button data-record-go="meds">💊 Medication</button><button data-record-go="reports">📋 Handover / report</button></div>';
 }
 function moreView(){
- return v8Header()+'<div class="screenIntro"><h1>More</h1><p>Profiles, medication, reports, backup and app settings.</p></div><div class="moreGrid"><button class="moreTile" data-more-go="meds">💊<b>Medication</b><span>Schedules and administrations</span></button><button class="moreTile" data-more-go="people">👤<b>People & support</b><span>Profiles and support information</span></button><button class="moreTile" data-more-go="reports">📋<b>Reports</b><span>Handover and summaries</span></button><button class="moreTile" data-more-action="backup">💾<b>Backup</b><span>Export NeuroPattern data</span></button></div><div class="safetyNote"><b>NeuroPattern V13.0.1</b> — usability refinement. Recorded patterns are associations and do not establish causation or replace professional judgement.</div>';
+ return v8Header()+'<div class="screenIntro"><h1>More</h1><p>Profiles, medication, reports, backup and app settings.</p></div><div class="moreGrid"><button class="moreTile" data-more-go="meds">💊<b>Medication</b><span>Schedules and administrations</span></button><button class="moreTile" data-more-go="people">👤<b>People & support</b><span>Profiles and support information</span></button><button class="moreTile" data-more-go="reports">📋<b>Reports</b><span>Handover and summaries</span></button><button class="moreTile" data-more-action="backup">💾<b>Backup</b><span>Export NeuroPattern data</span></button></div><div class="safetyNote"><b>NeuroPattern V13.1</b> — usability refinement. Recorded patterns are associations and do not establish causation or replace professional judgement.</div>';
 }
 function render(){if(activeRecordConfirmation)activeRecordConfirmation.close();document.body.classList.toggle("dark",!!(state.settings&&state.settings.dark));document.body.classList.toggle("motionOff",!!(state.settings&&state.settings.reducedMotion));document.body.classList.toggle("smartLogging",current==="log");
   try{
@@ -1560,7 +1594,7 @@ function bind(){
       showSavedToast("Record saved successfully");
     }catch(err){console.error("Record save failed",err);if(!err.neuropatternSaveReported)alert("Unable to save record: "+(err.message||String(err))+". Keep this form open and retry.");}finally{delete f.dataset.saving;}
   };
-  var mf=document.getElementById("medForm");if(mf)mf.onsubmit=function(e){e.preventDefault();var fd=new FormData(mf);var med={id:String(Date.now()),person:state.active,name:fd.get("name"),dose:fd.get("dose"),schedule:fd.get("schedule"),kind:fd.get("kind")};state.meds.push(med);audit("ADD_MEDICATION",med.name);save(mf);render();};
+  var mf=document.getElementById("medForm");if(mf)mf.onchange=function(){mf.classList.toggle("prnMedication",mf.elements.kind.value==="PRN");};if(mf)mf.onsubmit=function(e){e.preventDefault();var fd=new FormData(mf);var med={id:String(Date.now()),person:state.active,name:fd.get("name"),dose:fd.get("dose"),schedule:fd.get("schedule"),kind:fd.get("kind")};state.meds.push(med);audit("ADD_MEDICATION",med.name);save(mf);render();};
   var pf=document.getElementById("personForm");if(pf)pf.onsubmit=function(e){e.preventDefault();var fd=new FormData(pf),id="p"+Date.now();state.people.push({id:id,name:fd.get("name"),baseline:fd.get("baseline"),communication:fd.get("communication"),warningProfile:fd.get("warningProfile")||"",factorProfile:"",helpfulApproaches:fd.get("helpfulApproaches")||"",avoidApproaches:"",sensoryNeeds:"",recoveryIndicators:"",riskNotes:fd.get("riskNotes")});clearEditing();state.active=id;audit("ADD_PROFILE",fd.get("name"),id);save(pf);render();};
   var esb=document.getElementById("editSupportBtn"),sf=document.getElementById("supportForm");
   if(esb&&sf)esb.onclick=function(){sf.classList.toggle("open");esb.textContent=sf.classList.contains("open")?"Close editor":"Edit support profile";};
