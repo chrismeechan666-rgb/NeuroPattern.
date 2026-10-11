@@ -266,11 +266,11 @@ main{
 .statusRow{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
 .statusBtn{border:1px solid transparent;border-radius:15px;min-height:78px;padding:9px 3px;text-align:center;font-weight:900;box-shadow:0 4px 10px rgba(0,0,0,.04)}
 .statusBtn span{display:block;font-size:22px;margin-bottom:4px}.statusBtn b{display:block;font-size:11px}.statusBtn small{display:block;font-size:9px;opacity:.75;margin-top:2px}
-.statusBtn[data-level="0"]{background:#dff5e9;color:#21734d;border-color:#bce7d0}
-.statusBtn[data-level="1"]{background:#e7f2ff;color:#27659a;border-color:#c9def5}
-.statusBtn[data-level="2"]{background:#fff3c9;color:#866719;border-color:#f2dfa0}
-.statusBtn[data-level="3"]{background:#ffe4c8;color:#9b5521;border-color:#f3c99e}
-.statusBtn[data-level="4"]{background:#ffe0e0;color:#a43a3a;border-color:#f0bebe}
+.statusBtn[data-level="0"],#logForm .intensityCard[data-intensity="0"]{background:#dff5e9;color:#21734d;border-color:#bce7d0}
+.statusBtn[data-level="1"],#logForm .intensityCard[data-intensity="1"]{background:#e7f2ff;color:#27659a;border-color:#c9def5}
+.statusBtn[data-level="2"],#logForm .intensityCard[data-intensity="2"]{background:#fff3c9;color:#866719;border-color:#f2dfa0}
+.statusBtn[data-level="3"],#logForm .intensityCard[data-intensity="3"]{background:#ffe4c8;color:#9b5521;border-color:#f3c99e}
+.statusBtn[data-level="4"],#logForm .intensityCard[data-intensity="4"]{background:#ffe0e0;color:#a43a3a;border-color:#f0bebe}
 .statusBtn:active{transform:scale(.97)}
 .homeActions{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:12px 0}.homeAction{border:1px solid var(--line);border-radius:15px;background:var(--surface);color:var(--ink);padding:13px 12px;text-align:left;font-weight:900}.homeAction span{display:block;color:var(--muted);font-size:10px;font-weight:600;margin-top:2px}
 .glanceGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0}.glanceCard{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:13px}.glanceCard small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.04em;font-weight:850}.glanceCard b{display:block;margin-top:5px;font-size:16px;color:var(--ink)}
@@ -554,6 +554,31 @@ body.dark .recordConfirmProceed.danger{background:#b83c3c;border-color:#b83c3c}
 body.dark .recordConfirmButtons button:focus-visible{outline-color:#8dd9c7}
 @media(max-width:360px){.recordConfirmPanel{padding:20px}.recordConfirmButtons{gap:8px}}
 </style>
+<style id="v13-smart-logging">
+body.smartLogging .quickRecord,body.smartLogging .navadd,body.smartLogging #quickAdd{display:none!important}
+#logForm .smartSection{margin:12px 0;border:1px solid var(--line);border-radius:18px;background:var(--surface);overflow:hidden}
+#logForm .smartSection summary{min-height:52px;padding:15px 16px;font-weight:850;font-size:15px;cursor:pointer;color:var(--ink)}
+#logForm .smartSection summary:focus-visible{outline:3px solid var(--teal);outline-offset:-3px;border-radius:16px}
+#logForm .smartSection[open] summary{border-bottom:1px solid var(--line);background:var(--teal2)}
+#logForm .smartSectionContent{padding:14px 16px}
+#logForm .smartField{margin-bottom:16px}#logForm .smartField:last-child{margin-bottom:0}
+#logForm .smartField>label{display:block;font-size:13px;font-weight:800;margin-bottom:8px}
+#logForm .logPills{display:block;overflow:visible;padding:0}
+#logForm .chips{flex-wrap:wrap;gap:7px}
+#logForm .chips:not(.expanded) .rareChip:not(.on){display:none}
+#logForm .chipMore{min-height:44px;margin-top:6px;padding:7px 10px;border:0;border-radius:11px;background:var(--teal2);color:var(--ink);font-size:12px;font-weight:800}
+#logForm .chip{min-height:44px}
+#logForm .stageGuidance{margin:10px 0;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--teal2);color:var(--ink);font-size:13px;line-height:1.5}
+#logForm .stageDisclaimer,#logForm .legacyPain{font-size:12px;line-height:1.6;color:var(--muted)}
+#logForm .intensityCard{min-height:84px;border-width:2px}
+#logForm .intensityCard b{font-size:11px;line-height:1.3}
+#logForm .intensityCard.on{outline:3px solid currentColor;outline-offset:-3px;box-shadow:0 3px 10px #0002}
+#logForm .intensityCard:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+#logForm.quickRecordMode .quickEssential summary{display:none}
+body.dark #logForm .smartSection,body.dark #logForm .formSection{background:var(--surface)}
+body.dark #logForm .chip.on{color:#d3fff2;border-color:#8dd9c7}
+@media(max-width:390px){#logForm .intensityGrid{grid-template-columns:repeat(3,minmax(0,1fr))}#logForm .intensityCard b{font-size:13px}#logForm .intensityCard small{display:block}}
+</style>
 </head>
 <body>
 <div id="v11Splash" class="v11Splash"><div><div class="neuroAnim"><div class="node n1"></div><div class="node n2"></div><div class="node n3"></div><div class="node n4"></div><div class="node n5"></div><div class="node n6"></div><div class="neuroCore">N</div></div><div class="splashWords"><b>NeuroPattern</b><span>connecting the record</span></div></div></div>
@@ -586,6 +611,15 @@ function loadState(){
 var state=loadState(), current="home", draftLevel=null, patternDays=7, reportDays=Number((state.settings&&state.settings.reportDays)||7), editingId=null, editingPerson=null, recordMode="quick", quickLastId=null;
 var persistedState=clone(state);
 var tabDefs=[["home","Home"],["log","Log"],["timeline","Timeline"],["patterns","Patterns"],["meds","Meds"],["people","People"],["reports","Reports"],["settings","Settings"]];
+var intensityLabels=["Calm","Mild","Moderate","High","Aggressive"];
+var painObservations=["No signs observed","Possible discomfort","Clear signs of discomfort","Unable to assess","Not applicable"];
+var painIndicators=["Grimacing","Guarding","Changes in movement","Restlessness","Protecting an area","Moaning / vocal changes"];
+var escalationStages=[
+  {label:"Stage 1: Early Warning / Triggers",signs:"Subtle observable changes.",response:"Gentle check-in, validation, quieter environment."},
+  {label:"Stage 2: Hostile / Agitation",signs:"Raised voice, argumentative behaviour or overt agitation.",response:"Calm boundaries, limited choices, avoid arguments."},
+  {label:"Stage 3: Threatening / Acceleration",signs:"Threats, clenched fists, shouting or other immediate warning signs.",response:"Physical distance, brief communication, safe exit and assistance."},
+  {label:"Stage 4: Assaultive / Crisis",signs:"Physical aggression, self-harm or immediate danger.",response:"Prioritise safety and follow the individual's approved crisis plan and emergency procedures."}
+];
 var behaviours=["Pacing","Repetitive questioning","Raised voice","Swearing","Verbal threats","Refusing care","Pushing / grabbing","Striking out","Kicking","Throwing objects","Property damage","Self-injury","Disinhibition","Other"];
 var triggers=["Personal care","Medication due","Medication recently given","Pain / discomfort","Noise / overstimulation","Busy environment","Multiple people talking","Too much information","Communication difficulty","Difficulty expressing needs","Memory / recall difficulty","Attention / concentration difficulty","Difficulty adapting to change","Sensory / perceptual difficulty","Fatigue","Poor sleep","Hunger / thirst","Bowel / bladder discomfort","Change of routine","Transition / waiting","Unfamiliar person","Demand / request","Conflict / interaction","Unknown"];
 var warningSigns=["Pacing / restlessness","Fixation / repetition","Increased speech","Reduced speech","Muscle tension","Clenched fists","Faster breathing","Flushed / hot","Withdrawal","Increased volume","Disinhibition","Other personalised sign"];
@@ -610,7 +644,7 @@ function save(form){
 }
 function clearEditing(){editingId=null;editingPerson=null;draftLevel=null;recordMode="quick";}
 function startRecord(mode){rememberDraft();clearEditing();recordMode=mode||"quick";current="log";render();}
-function openEarlyWarning(){startRecord("detailed");applyRecordMode("detailed");rememberDraft();var el=document.getElementById("earlyWarningSection");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});}
+function openEarlyWarning(){startRecord("detailed");applyRecordMode("detailed");var el=document.getElementById("earlyWarningSection");if(el)el.open=true;rememberDraft();if(el)el.scrollIntoView({behavior:"smooth",block:"start"});}
 function changePerson(id){
   if(!state.people.some(function(p){return p.id===id;}))return;
   rememberDraft();state.active=id;save();clearEditing();render();
@@ -638,7 +672,7 @@ function changedLogFields(form){
   return changed;
 }
 function collectLogDraft(form){
-  return Object.assign({version:3,person:form.dataset.person,recordId:form.dataset.recordId||"",savedAt:Date.now(),mode:recordMode,prnFollowFor:form.dataset.prnFollowFor||"",pendingId:form.dataset.pendingId||""},logFormValues(form),form.dataset.recordId?{changes:changedLogFields(form),baseRecord:form.editRecord}:{});
+  return Object.assign({version:3,person:form.dataset.person,recordId:form.dataset.recordId||"",savedAt:Date.now(),mode:recordMode,prnFollowFor:form.dataset.prnFollowFor||"",pendingId:form.dataset.pendingId||""},logFormValues(form),smartLogUI(form),form.dataset.recordId?{changes:changedLogFields(form),baseRecord:form.editRecord}:{});
 }
 function retainEditDraft(form,draft){
   try{
@@ -675,13 +709,14 @@ function restoreLogDraft(form){
   if(d){
     var allowed=null;
     if(form.dataset.recordId){
-      allowed=d.changes.filter(function(k){return form.editRecord&&JSON.stringify(d.baseRecord[k])===JSON.stringify(form.editRecord[k]);});
+      allowed=d.changes.filter(function(k){return k!=="pain"&&form.editRecord&&JSON.stringify(d.baseRecord[k])===JSON.stringify(form.editRecord[k]);});
       if(allowed.length!==d.changes.length)retainEditDraft(form,d);
     }
     function accepts(k){return !allowed||allowed.indexOf(k)!==-1;}
     Object.keys(d.fields||{}).forEach(function(k){if(!accepts(k))return;var el=form.elements[k];if(!el)return;if(el.type==="checkbox")el.checked=!!d.fields[k];else setLogFieldValue(el,d.fields[k]);});
     Object.keys(d.chips||{}).forEach(function(k){if(!accepts(k))return;var g=form.querySelector('.chips[data-name="'+k+'"]');if(!g||!Array.isArray(d.chips[k]))return;var known=Array.prototype.map.call(g.querySelectorAll(".chip"),function(b){return b.dataset.v;});g.dataset.retained=JSON.stringify(d.chips[k].filter(function(v){return known.indexOf(v)===-1;}));g.querySelectorAll('.chip').forEach(function(b){b.classList.toggle("on",d.chips[k].indexOf(b.dataset.v)!==-1);});});
     Object.keys(d.answers||{}).forEach(function(k){if(!accepts(k))return;var el=form.elements[k],g=form.querySelector('.chips[data-name="'+k+'"]');if(el&&el.type==="checkbox")el.dataset.answer=d.answers[k];else if(g)g.dataset.answered=d.answers[k];});
+    restoreSmartLogUI(form,d);
     if(d.mode)applyRecordMode(d.mode);
     if(!form.dataset.recordId){form.dataset.prnFollowFor=d.prnFollowFor||"";form.dataset.pendingId=d.pendingId||"";}
   }
@@ -694,16 +729,34 @@ function clearLogDraft(form){
   try{localStorage.removeItem(draftKey(form));}catch(e){console.error("Saved draft cleanup failed",e);}
   try{sessionStorage.removeItem(sessionDraftKey(form));var d=JSON.parse(sessionStorage.getItem("np-v13-form-draft")||"null");if(d&&d.person===form.dataset.person&&(d.recordId||"")===(form.dataset.recordId||""))sessionStorage.removeItem("np-v13-form-draft");}catch(e){console.error("Saved session draft cleanup failed",e);}
 }
+function smartLogUI(form){
+  var ui={sections:{},chipExpansion:{}};
+  form.querySelectorAll('[data-log-section]').forEach(function(d){ui.sections[d.dataset.logSection]=recordMode==='quick'&&d.classList.contains('quickEssential')?d.dataset.detailedOpen==='true':d.open;});
+  form.querySelectorAll('.chips').forEach(function(g){ui.chipExpansion[g.dataset.name]=g.classList.contains('expanded');});return ui;
+}
+function restoreSmartLogUI(form,draft){
+  form.querySelectorAll('[data-log-section]').forEach(function(d){var value=draft.sections&&draft.sections[d.dataset.logSection];if(typeof value==='boolean'){d.dataset.detailedOpen=String(value);d.open=recordMode==='quick'&&d.classList.contains('quickEssential')?true:value;}});
+  form.querySelectorAll('.chips').forEach(function(g){if(draft.chipExpansion&&typeof draft.chipExpansion[g.dataset.name]==='boolean')g.classList.toggle('expanded',draft.chipExpansion[g.dataset.name]);});
+}
+function syncSmartLog(form){
+  var legacy=document.getElementById('legacyPainDisplay'),pain=form.elements.pain;
+  if(legacy){legacy.hidden=!pain||pain.value==='';legacy.textContent=legacy.hidden?'':'Previously recorded numerical pain score: '+pain.value+'/10. Retained unchanged; not converted to an observation.';}
+  var guidance=document.getElementById('stageGuidance'),stage=form.elements.escalationStage;
+  if(guidance){var value=stage?Number(stage.value):0,info=escalationStages[value-1],text=info?info.signs+' Suggested response: '+info.response:stage&&stage.value?('Previously recorded stage: '+stage.value+'. Guidance unavailable for this value.'):'Not assessed / Unclear. Record a stage only from observed presentation; intensity and escalation speed are separate.';if(guidance.textContent!==text)guidance.textContent=text;}
+  form.querySelectorAll('[data-chip-more]').forEach(function(b){var g=form.querySelector('.chips[data-name="'+b.dataset.chipMore+'"]'),expanded=g&&g.classList.contains('expanded');b.textContent=expanded?'Show less':'Show more';b.setAttribute('aria-expanded',String(!!expanded));b.setAttribute('aria-label',b.textContent+' options');});
+}
 function syncLogChoices(form){
-  form.querySelectorAll('[data-intensity]').forEach(function(b){b.classList.toggle("on",b.dataset.intensity===form.elements.level.value);});
-  form.querySelectorAll('[data-entry-choice]').forEach(function(b){b.classList.toggle("on",b.dataset.entryChoice===form.elements.type.value);});
+  syncSmartLog(form);
+  form.querySelectorAll(".chips").forEach(function(g){g.querySelectorAll(".chip").forEach(function(b){b.setAttribute("aria-pressed",String(b.classList.contains("on")));});});
+  form.querySelectorAll('[data-intensity]').forEach(function(b){b.classList.toggle("on",b.dataset.intensity===form.elements.level.value);b.setAttribute("aria-pressed",String(b.dataset.intensity===form.elements.level.value));});
+  form.querySelectorAll('[data-entry-choice]').forEach(function(b){b.classList.toggle("on",b.dataset.entryChoice===form.elements.type.value);b.setAttribute("aria-pressed",String(b.dataset.entryChoice===form.elements.type.value));});
   document.querySelectorAll('[data-count-for]').forEach(function(c){var el=form.elements[c.dataset.countFor];if(el)c.textContent=el.value.length+"/500";});
 }
 function active(){return state.people.find(function(p){return p&&p.id===state.active;})||state.people[0];}
 function mine(){return state.logs.filter(function(x){return x.person===state.active;});}
 function medsMine(){return state.medLogs.filter(function(x){return x.person===state.active;});}
 function todayKey(){return new Date().toISOString().slice(0,10);}
-function levelName(n){if(n==null||n==="")return "Not recorded";return ["Calm","Unsettled","Agitated","Highly agitated","Aggressive"][Number(n)]||"Unknown";}
+function levelName(n){if(n==null||n==="")return "Not recorded";return intensityLabels[Number(n)]||"Unknown";}
 function renderTabs(){
   document.getElementById("activeBadge").textContent=active().name||"Profile";
   var el=document.getElementById("tabs");
@@ -711,7 +764,7 @@ function renderTabs(){
   Array.prototype.forEach.call(el.querySelectorAll("button"),function(b){b.onclick=function(){rememberDraft();if(b.dataset.tab==="log")clearEditing();current=b.dataset.tab;render();};});
 }
 function card(s,cls){return '<div class="card '+(cls||"")+'">'+s+'</div>';}
-function chips(name,arr){return '<div class="row chips" data-name="'+name+'">'+arr.map(function(v){return '<button type="button" class="chip" data-v="'+esc(v)+'">'+esc(v)+'</button>';}).join("")+'</div>';}
+function chips(name,arr,compact){return '<div class="row chips" id="chips-'+name+'" data-name="'+name+'">'+arr.map(function(v,i){return '<button type="button" class="chip '+(compact&&i>=6?'rareChip':'')+'" data-v="'+esc(v)+'">'+esc(v)+'</button>';}).join("")+'</div>'+(compact&&arr.length>6?'<button type="button" class="chipMore" data-chip-more="'+name+'" aria-controls="chips-'+name+'" aria-expanded="false">Show more</button>':'');}
 function selected(name){return Array.prototype.map.call(document.querySelectorAll('.chips[data-name="'+name+'"] .chip.on'),function(x){return x.dataset.v;});}
 function withinDays(ts,days){return (Date.now()-new Date(ts).getTime())<=days*86400000;}
 function summary(days){
@@ -742,9 +795,13 @@ function insights(days){
   var severe=l.filter(function(x){return Number(x.level)>=3;});
   if(severe.length){
     var poor=severe.filter(function(x){return x.sleep==="Poor"||x.sleep==="Interrupted";}).length;
-    var pain=severe.filter(function(x){return Number(x.pain||0)>=4;}).length;
+    var scored=severe.filter(function(x){return x.pain!=null&&x.pain!==""&&Number.isFinite(Number(x.pain));});
+    var pain=scored.filter(function(x){return Number(x.pain)>=4;}).length;
+    var observed=severe.filter(function(x){return ["No signs observed","Possible discomfort","Clear signs of discomfort"].indexOf(x.painObservation)!==-1;});
+    var discomfort=observed.filter(function(x){return x.painObservation!=="No signs observed";}).length;
     out.push(poor+" of "+severe.length+" high-intensity records followed poor or interrupted sleep.");
-    out.push(pain+" of "+severe.length+" high-intensity records included pain rated 4/10 or above.");
+    if(scored.length)out.push(pain+" of "+scored.length+" high-intensity records with historical numerical pain scores had scores of 4/10 or above.");
+    if(observed.length)out.push(discomfort+" of "+observed.length+" high-intensity records with assessed discomfort observations recorded possible or clear signs of discomfort.");
   }
   var m=medsMine().filter(function(x){return withinDays(x.ts,days);});
   if(m.length&&severe.length){
@@ -801,7 +858,7 @@ function homeView(){
   var ml=medsMine().slice().sort(function(a,b){return new Date(b.ts)-new Date(a.ts);});
   var lastMed=ml[0]||null;
   var patternItems=insights(7);var patternText=patternItems.length?patternItems[0]:"Not enough information yet. Keep recording observations to build a clearer picture.";
-  var faces=["●","◔","◡","◠","●"], names=["Calm","Mild","Moderate","High","Aggressive"];
+  var faces=["●","◔","◡","◠","●"], names=intensityLabels;
   return v8Header()+
     '<div class="homeHero"><h1>Overview</h1><p>'+esc(active().name)+' • today at a glance</p></div>'+
     '<div class="todayStrip"><div class="todayMini"><b>'+all.filter(function(x){return x.date===todayKey();}).length+'</b><small>records today</small></div><div class="todayMini"><b>'+all.filter(function(x){return x.date===todayKey()&&Number(x.level)>=3;}).length+'</b><small>high intensity</small></div><div class="todayMini"><b>'+ml.filter(function(x){return (x.date||String(x.ts||"").slice(0,10))===todayKey();}).length+'</b><small>medications</small></div></div>'+
@@ -819,12 +876,17 @@ function homeView(){
       '<div class="recentSimpleActions"><button class="edit" data-edit-log="'+esc(x.id)+'">Edit</button><button class="duplicateBtn" data-duplicate-log="'+esc(x.id)+'">Duplicate</button><button class="delete" data-delete-kind="logs" data-delete-id="'+esc(x.id)+'">Delete</button></div></div>';
     }).join(""):'<div class="card"><div class="empty">No observations yet.</div></div>');
 }
+function logSection(key,title,content,essential){return '<details class="smartSection '+(essential?'quickEssential':'quickOptional')+'" data-log-section="'+key+'"'+(key==='earlyWarning'?' id="earlyWarningSection"':'')+'><summary>'+title+'</summary><div class="smartSectionContent">'+content+'</div></details>';}
+function logText(name,label,placeholder,optional){return '<div class="smartField '+(optional?'quickOptional':'')+'"><label for="log-'+name+'">'+label+'</label><div class="counterWrap"><textarea id="log-'+name+'" class="logTextarea" maxlength="500" name="'+name+'" placeholder="'+placeholder+'"></textarea><span class="charCount" data-count-for="'+name+'">0/500</span></div></div>';}
+function logSelect(name,label,options,optional){return '<div class="smartField '+(optional?'quickOptional':'')+'"><label for="log-'+name+'">'+label+'</label><select id="log-'+name+'" name="'+name+'">'+options+'</select></div>';}
+function plainOptions(values){return values.map(function(v){return '<option>'+esc(v)+'</option>';}).join('');}
+function logNumber(name,label){var input='<input id="log-'+name+'" class="inp" type="number" min="0" name="'+name+'" placeholder="Optional">';return '<div class="smartField quickOptional"><label for="log-'+name+'">'+label+'</label>'+(name==='duration'?'<div class="stepField">'+input+'<button type="button" class="stepBtn" data-step-target="log-duration" data-step="-1" aria-label="Decrease duration">−</button><button type="button" class="stepBtn" data-step-target="log-duration" data-step="1" aria-label="Increase duration">+</button></div>':input)+'</div>';}
+function logChips(name,title,values){return '<div class="smartField"><div class="formSectionHead"><span>'+title+'</span><button type="button" class="clearMini" data-clear-chips="'+name+'">Clear all</button></div><div class="logPills" role="group" aria-label="'+esc(title)+'">'+chips(name,values,true)+'</div></div>';}
 function logView(){
   var er=editingId?state.logs.find(function(x){return x.id===editingId;}):null;
-  var faces=["●","◔","◡","◠","●"], labels=["Calm","Mild","Moderate","High","Aggressive"];
+  var faces=["●","◔","◡","◠","●"], labels=intensityLabels;
   return v8Header()+
-  '<div class="logIntro"><h1>'+(er?'Edit behaviour / incident':'Behaviour / incident record')+'</h1><p>A clear, factual record of presentation, context, support and outcome.</p></div>'+
-  '<div class="logStepBar"><span class="logStep active">1 · What happened</span><span class="logStep">2 · Context</span><span class="logStep">3 · Support</span><span class="logStep">4 · Review</span></div>'+
+  '<div class="logIntro"><h1>'+(er?'Edit behaviour / incident':'V13 · Smart record')+'</h1><p>A clear, factual record of presentation, context, support and outcome.</p></div>'+
   '<div class="logTip"><span>✓</span><div><b>Keep it factual.</b> Record what was observed, what happened around it and the response. Optional fields can be left blank when not known.</div></div>'+
   '<div class="recordModeSwitch" role="group" aria-label="Recording mode"><button type="button" data-record-mode="quick" class="on">Quick record</button><button type="button" data-record-mode="detailed">Detailed record</button></div>'+
   '<p class="recordModeHint" id="recordModeHint">Essential fields first. Switch to Detailed to add context, support and review information.</p>'+
@@ -835,25 +897,43 @@ function logView(){
     '</div>'+
     '<div class="formSection"><div class="formSectionHead"><div><h3>Intensity</h3><p>Select the highest level observed.</p></div></div>'+
       '<input type="hidden" name="level" id="levelSelect" value="'+String(er&&er.level!=null?Number(er.level):"")+'">'+
-      '<div class="intensityGrid">'+faces.map(function(face,i){return '<button type="button" class="intensityCard '+((er&&er.level!=null?Number(er.level):null)===i?"on":"")+'" data-intensity="'+i+'"><span class="face">'+face+'</span><b>'+i+'</b><small>'+labels[i]+'</small></button>';}).join("")+'</div>'+
+      '<div class="intensityGrid">'+faces.map(function(face,i){return '<button type="button" class="intensityCard '+((er&&er.level!=null?Number(er.level):null)===i?"on":"")+'" aria-pressed="'+((er&&er.level!=null?Number(er.level):null)===i?'true':'false')+'" data-intensity="'+i+'"><span class="face">'+face+'</span><b>'+labels[i]+'</b><small>Level '+i+'</small></button>';}).join("")+'</div>'+
     '</div>'+
-    '<div class="formSection"><div class="formSectionHead"><div><h3>Behaviour</h3><p>Select all that apply.</p></div><button type="button" class="clearMini" data-clear-chips="behaviours">Clear all</button></div><div class="logPills">'+chips("behaviours",behaviours)+'</div></div>'+
-    '<div class="formSection"><div class="formSectionHead"><div><h3>Context / possible factors</h3><p>Select anything recorded around the event. This does not imply causation.</p></div><button type="button" class="clearMini" data-clear-chips="triggers">Clear all</button></div><div class="logPills">'+chips("triggers",triggers)+'</div></div>'+
-    '<div class="formSection quickOptional" id="earlyWarningSection"><div class="formSectionHead"><div><h3>Early warning signs</h3><p>Record observable changes only — select all that apply.</p></div><button type="button" class="clearMini" data-clear-chips="warningSigns">Clear all</button></div><div class="logPills">'+chips("warningSigns",warningSigns)+'</div></div>'+
-    '<div class="formSection grid2 quickOptional"><div><div class="formSectionHead"><div><h3>Escalation</h3><p>How quickly did the presentation change?</p></div></div><select name="escalationRate">'+escalationRates.map(function(x){return '<option>'+esc(x)+'</option>';}).join("")+'</select></div><div><div class="formSectionHead"><div><h3>Recovery</h3><p>Presentation after support / time.</p></div></div><select name="recoveryState">'+recoveryStates.map(function(x){return '<option>'+esc(x)+'</option>';}).join("")+'</select></div></div>'+
-    '<div class="formSection quickOptional"><div class="formSectionHead"><div><h3>What happened immediately before?</h3></div></div><div class="counterWrap"><textarea class="logTextarea" maxlength="500" name="antecedent" placeholder="e.g. asked to get dressed, told no, waiting for activity..."></textarea><span class="charCount" data-count-for="antecedent">0/500</span></div></div>'+
-    '<div class="formSection quickOptional"><div class="formSectionHead"><div><h3>What happened immediately after?</h3><p>Consequence / response / recovery.</p></div></div><div class="counterWrap"><textarea class="logTextarea" maxlength="500" name="consequence" placeholder="e.g. calmed after 10 minutes, offered drink, went to quiet room..."></textarea><span class="charCount" data-count-for="consequence">0/500</span></div></div>'+
-    '<div class="formSection quickOptional"><div class="formSectionHead"><div><h3>Intervention / de-escalation</h3><p>Select all that apply.</p></div><button type="button" class="clearMini" data-clear-chips="interventions">Clear all</button></div><div class="logPills">'+chips("interventions",interventions)+'</div></div>'+
-    '<div class="formSection quickOptional"><div class="formSectionHead"><div><h3>Outcome</h3></div></div><select name="outcome"><option>Not known</option><option>Much calmer</option><option>Somewhat calmer</option><option>No change</option><option>More agitated</option></select></div>'+
-    '<div class="formSection quickOptional"><div class="formSectionHead"><div><h3>Safety / associated events</h3><p>Untouched boxes mean not recorded. Select only events observed; clearing a selected box records No.</p></div></div><div class="factorGrid"><label class="factorCheck"><input type="checkbox" name="injury"> Injury</label><label class="factorCheck"><input type="checkbox" name="damage"> Property damage</label><label class="factorCheck"><input type="checkbox" name="restrictive"> Restrictive intervention</label></div></div>'+
-    '<div class="formSection grid2 quickOptional"><div><div class="formSectionHead"><div><h3>Duration (minutes)</h3></div></div><div class="stepField"><input class="inp" id="durationInput" type="number" min="0" name="duration" placeholder="Optional"><button type="button" class="stepBtn" data-step-target="durationInput" data-step="-1">−</button><button type="button" class="stepBtn" data-step-target="durationInput" data-step="1">+</button></div></div><div><div class="formSectionHead"><div><h3>Pain (0–10)</h3></div></div><div class="stepField"><input class="inp" id="painInput" type="number" min="0" max="10" name="pain" placeholder="Optional"><button type="button" class="stepBtn" data-step-target="painInput" data-step="-1">−</button><button type="button" class="stepBtn" data-step-target="painInput" data-step="1">+</button></div></div></div>'+
-    '<div class="formSection quickOptional"><div class="formSectionHead"><div><h3>Sleep (last night)</h3></div></div><select name="sleep"><option>Unknown</option><option>Good</option><option>Interrupted</option><option>Poor</option></select></div>'+
-    '<div class="formSection quickOptional"><div class="formSectionHead"><div><h3>Recovery time (minutes)</h3><p>Optional — time until the person returned towards their usual presentation.</p></div></div><input class="inp" type="number" min="0" name="recoveryMinutes" placeholder="Optional"></div>'+
-    '<div class="formSection quickOptional"><div class="formSectionHead"><div><h3>Staff reflection</h3><p>Optional: could anything be approached differently next time?</p></div></div><div class="counterWrap"><textarea class="logTextarea" maxlength="500" name="staffReflection" placeholder="Factual reflection for future support..."></textarea><span class="charCount" data-count-for="staffReflection">0/500</span></div></div>'+
-    '<div class="formSection"><div class="formSectionHead"><div><h3>Additional factual notes</h3></div></div><div class="counterWrap"><textarea class="logTextarea" maxlength="500" name="notes" placeholder="Add any relevant details (optional)..."></textarea><span class="charCount" data-count-for="notes">0/500</span></div></div>'+
+    '<input type="hidden" name="pain" value="" aria-label="Historical pain score">'+
+    logSection('behaviour','Behaviour',logChips('behaviours','Select all observed behaviours',behaviours),true)+
+    logSection('context','Context',
+      logChips('triggers','Possible factors (association, not causation)',triggers)+
+      logText('antecedent','What happened immediately before?','Factual context before the event...',true)+
+      logSelect('sleep','Sleep (last night)',plainOptions(['Unknown','Good','Interrupted','Poor']),true)+
+      logSelect('painObservation','Pain / Discomfort Observation',painObservations.map(function(v){return '<option value="'+(v==='Unable to assess'?'':esc(v))+'"'+(v==='Unable to assess'?' selected':'')+'>'+esc(v)+'</option>';}).join(''),true)+
+      '<p class="legacyPain quickOptional" id="legacyPainDisplay" hidden></p>'+
+      '<div class="quickOptional">'+logChips('painIndicators','Optional observable indicators',painIndicators)+'</div>',true)+
+    logSection('earlyWarning','Early Warning',logChips('warningSigns','Observable early changes',warningSigns),false)+
+    logSection('response','Escalation &amp; Response',
+      logSelect('escalationStage','Escalation stage', '<option value="">Not assessed / Unclear</option>'+escalationStages.map(function(stage,i){return '<option value="'+(i+1)+'">'+esc(stage.label)+'</option>';}).join(''))+
+      '<div class="stageGuidance" id="stageGuidance" role="status" aria-live="polite"></div><p class="stageDisclaimer">Informational guidance only. This is not an automatic clinical decision or authorisation for restrictive intervention. Follow the individual’s approved plan and local emergency procedures.</p>'+
+      logSelect('escalationRate','Escalation speed',plainOptions(escalationRates))+
+      logChips('interventions','Support / de-escalation provided',interventions)+
+      logText('consequence','What happened immediately after?','Response and observable changes...',false),false)+
+    logSection('outcome','Outcome &amp; Safety',
+      logSelect('outcome','Outcome',plainOptions(['Not known','Much calmer','Somewhat calmer','No change','More agitated']))+
+      logSelect('recoveryState','Recovery state',plainOptions(recoveryStates))+
+      logNumber('recoveryMinutes','Recovery time (minutes)')+
+      '<p class="muted">Untouched boxes mean not recorded. Select observed events only; clearing a selected box records No.</p><div class="factorGrid"><label class="factorCheck"><input type="checkbox" name="injury"> Injury</label><label class="factorCheck"><input type="checkbox" name="damage"> Property damage</label><label class="factorCheck"><input type="checkbox" name="restrictive"> Restrictive intervention</label></div>',false)+
+    logSection('additional','Additional Details',
+      logText('notes','Additional factual notes','Relevant details (optional)...',false)+
+      logNumber('duration','Duration (minutes)')+
+      logText('staffReflection','Staff reflection','Factual reflection for future support...',true),true)+
     '<div class="reviewBox"><b>Ready to save ✓</b><span>Check the record is factual and accurate, then save.</span></div>'+
     '<div class="saveBar"><button type="submit" class="primarySave">'+(er?'Save changes':'Save record')+'</button>'+(er?'<button type="button" id="cancelEditBtn" class="cancelEdit">Cancel editing</button>':'')+'</div>'+
   '</form>';
+}
+function recordAssessmentPills(x){
+  var parts=[];
+  if(x.painObservation)parts.push('Pain / discomfort: '+x.painObservation);
+  if(x.pain!=null&&x.pain!=='')parts.push('Historical pain score: '+x.pain+'/10');
+  if(x.escalationStage!=null&&x.escalationStage!==''){var stage=escalationStages[Number(x.escalationStage)-1];parts.push(stage?stage.label:'Recorded escalation stage: '+x.escalationStage);}
+  return parts.map(function(v){return '<div class="pill">'+esc(v)+'</div>';}).join('');
 }
 function timelineView(){
   var ev=mine().map(function(x){var y=Object.assign({},x);y.kind="beh";return y;})
@@ -873,7 +953,7 @@ function timelineView(){
     if(x.kind==="handover")return '<div class="card event amber"><div class="eventHead"><div class="eventTitle">📝 Handover</div><div class="muted">'+new Date(x.ts).toLocaleString()+'</div></div><div class="p">'+esc(x.note)+'</div></div>';
     return '<div class="card event '+(Number(x.level)>=3?"red":"")+'"><div class="eventHead"><div class="eventTitle">'+esc(x.type)+' • '+esc(levelName(x.level))+'</div><div class="muted">'+new Date(x.ts).toLocaleString()+'</div></div>'+
       '<div class="p">'+esc((x.behaviours||[]).join(", ")||"No behaviour selected")+'</div><div class="muted">Possible factors: '+esc((x.triggers||[]).join(", ")||"not recorded")+'</div>'+
-      (x.duration?'<div class="pill">'+esc(x.duration)+' min</div>':'')+(x.escalationRate&&x.escalationRate!=="Not recorded"?'<div class="pill">'+esc(x.escalationRate)+' escalation</div>':'')+(x.recoveryMinutes?'<div class="pill">recovery '+esc(x.recoveryMinutes)+' min</div>':'')+(x.injury?'<div class="pill">injury</div>':'')+(x.damage?'<div class="pill">property damage</div>':'')+
+      recordAssessmentPills(x)+(x.duration?'<div class="pill">'+esc(x.duration)+' min</div>':'')+(x.escalationRate&&x.escalationRate!=="Not recorded"?'<div class="pill">'+esc(x.escalationRate)+' escalation</div>':'')+(x.recoveryMinutes?'<div class="pill">recovery '+esc(x.recoveryMinutes)+' min</div>':'')+(x.injury?'<div class="pill">injury</div>':'')+(x.damage?'<div class="pill">property damage</div>':'')+
       '<div class="recentSimpleSub">Recorded by <b>'+esc(x.staff||"Not set")+'</b>'+(x.updatedTs?' • edited':'')+'</div>'+
       '<div class="timelineActions"><button data-edit-log="'+esc(x.id)+'">Edit</button><button class="duplicateBtn" data-duplicate-log="'+esc(x.id)+'">Duplicate</button><button class="delete" data-delete-kind="logs" data-delete-id="'+esc(x.id)+'">Delete</button></div></div>';
   }).join("");
@@ -1084,7 +1164,7 @@ function showQuickToast(rec){
   setTimeout(function(){if(d.parentNode)d.remove();},6500);
 }
 function quickSaveLevel(level){
-  var d=new Date(),rec={id:newRecordId(),person:state.active,staff:staff()||"Not set",ts:d.toISOString(),date:d.toISOString().slice(0,10),type:"Observation",level:Number(level),behaviours:null,triggers:null,antecedent:null,consequence:null,pain:null,sleep:null,interventions:null,outcome:null,injury:null,damage:null,restrictive:null,duration:null,warningSigns:null,escalationRate:null,recoveryState:null,recoveryMinutes:null,staffReflection:null,notes:null,quick:true};
+  var d=new Date(),rec={id:newRecordId(),person:state.active,staff:staff()||"Not set",ts:d.toISOString(),date:d.toISOString().slice(0,10),type:"Observation",level:Number(level),behaviours:null,triggers:null,antecedent:null,consequence:null,pain:null,painObservation:null,painIndicators:null,escalationStage:null,sleep:null,interventions:null,outcome:null,injury:null,damage:null,restrictive:null,duration:null,warningSigns:null,escalationRate:null,recoveryState:null,recoveryMinutes:null,staffReflection:null,notes:null,quick:true};
   rememberDraft();state.logs.push(rec);audit("QUICK_OBSERVATION",levelName(level),rec.person);save();quickLastId=rec.id;render();showQuickToast(rec);
 }
 function setLogFieldValue(el,value){
@@ -1097,12 +1177,12 @@ function setLogFieldValue(el,value){
 function editFormSelections(rec){
   if(!rec)return;
   var f=document.getElementById("logForm");if(!f)return;
-  ["type","level","antecedent","consequence","pain","sleep","outcome","duration","notes","escalationRate","recoveryState","recoveryMinutes","staffReflection"].forEach(function(n){
+  ["type","level","antecedent","consequence","pain","painObservation","sleep","outcome","duration","notes","escalationStage","escalationRate","recoveryState","recoveryMinutes","staffReflection"].forEach(function(n){
     var el=f.elements[n];if(!el)return;
     if(rec[n]!=null)setLogFieldValue(el,rec[n]);else if(el.tagName!=="SELECT")el.value="";
   });
   ["injury","damage","restrictive"].forEach(function(n){var el=f.elements[n];if(!el)return;var v=rec[n];el.checked=v===true||v==="Yes";el.dataset.answer=v==null?"":String(el.checked);});
-  ["behaviours","triggers","interventions","warningSigns"].forEach(function(n){var g=f.querySelector('.chips[data-name="'+n+'"]');if(!g)return;g.dataset.answered=rec[n]==null?"":"true";var known=Array.prototype.map.call(g.querySelectorAll(".chip"),function(b){return b.dataset.v;});g.dataset.retained=JSON.stringify((rec[n]||[]).filter(function(v){return known.indexOf(v)===-1;}));g.querySelectorAll('.chip').forEach(function(b){b.classList.toggle("on",(rec[n]||[]).indexOf(b.dataset.v)!==-1);});});
+  ["behaviours","triggers","interventions","warningSigns","painIndicators"].forEach(function(n){var g=f.querySelector('.chips[data-name="'+n+'"]');if(!g)return;g.dataset.answered=rec[n]==null?"":"true";var known=Array.prototype.map.call(g.querySelectorAll(".chip"),function(b){return b.dataset.v;});g.dataset.retained=JSON.stringify((rec[n]||[]).filter(function(v){return known.indexOf(v)===-1;}));g.querySelectorAll('.chip').forEach(function(b){b.classList.toggle("on",(rec[n]||[]).indexOf(b.dataset.v)!==-1);});});
   f.dataset.prnFollowFor=rec.prnFollowFor||"";
   syncLogChoices(f);f.editRecord=clone(rec);f.editBaseline=logFormValues(f);
 }
@@ -1178,7 +1258,7 @@ function deleteAllLocalData(){
 }
 function onboardingHtml(){
   return '<div class="firstRunOverlay" id="firstRun"><div class="firstRunWrap">'+
-  '<div class="brandSplash"><div class="brandMark">N</div><div class="brandName">NeuroPattern</div><div class="brandTag">Behaviour • medication • pattern tracker</div><span class="releasePill">Public Release Candidate V10</span></div>'+
+  '<div class="brandSplash"><div class="brandMark">N</div><div class="brandName">NeuroPattern</div><div class="brandTag">Behaviour • medication • pattern tracker</div><span class="releasePill">V13 · Smart Logging</span></div>'+
   '<div class="card"><div class="onboardStep"><h3>1. What NeuroPattern does</h3><p>Records behaviour observations, incidents, possible factors, interventions, sleep, pain and medication administration times so you can review recorded patterns over time.</p></div>'+
   '<div class="onboardStep"><h3>2. What it does not do</h3><p>It does not diagnose, predict aggression, prove that medication caused behaviour, or advise medication changes.</p></div>'+
   '<div class="onboardStep"><h3>3. Data on this build</h3><p>Data is stored locally on this device. Before using identifiable health or care information in an organisation, appropriate privacy, security and clinical-governance controls are still required.</p></div>'+
@@ -1215,6 +1295,11 @@ function reportText(days){
   t.push("Incidents: "+r.incidents.length);
   t.push("High-intensity records: "+r.severe.length);
   t.push("Medication administrations: "+r.meds.length);
+  painObservations.filter(function(v){return v!=="Unable to assess";}).forEach(function(v){t.push("Pain / discomfort — "+v+": "+r.logs.filter(function(x){return x.painObservation===v;}).length);});
+  t.push("Pain / discomfort not assessed: "+r.logs.filter(function(x){return x.painObservation==null||x.painObservation==="Unable to assess";}).length);
+  t.push("Historical numerical pain scores: "+r.logs.filter(function(x){return x.pain!=null&&x.pain!=="";}).length+" (retained separately; not converted to observations)");
+  escalationStages.forEach(function(stage,i){t.push(stage.label+": "+r.logs.filter(function(x){return Number(x.escalationStage)===i+1;}).length);});
+  t.push("Escalation not assessed / unclear: "+r.logs.filter(function(x){return x.escalationStage==null||x.escalationStage==="";}).length);
   if(ins.length)t.push("Recorded patterns: "+ins.join(" "));
   t.push("Important: these are recorded associations only and do not establish medication causation or provide treatment advice.");
   return t.join("\n");
@@ -1264,13 +1349,13 @@ function v125RecordControls(){
 function moreView(){
  return v8Header()+'<div class="screenIntro"><h1>More</h1><p>Profiles, medication, reports, backup and app settings.</p></div><div class="moreGrid"><button class="moreTile" data-more-go="meds">💊<b>Medication</b><span>Schedules and administrations</span></button><button class="moreTile" data-more-go="people">👤<b>People & support</b><span>Profiles and support information</span></button><button class="moreTile" data-more-go="reports">📋<b>Reports</b><span>Handover and summaries</span></button><button class="moreTile" data-more-action="backup">💾<b>Backup</b><span>Export NeuroPattern data</span></button></div><div class="safetyNote"><b>NeuroPattern V13.0.1</b> — usability refinement. Recorded patterns are associations and do not establish causation or replace professional judgement.</div>';
 }
-function render(){if(activeRecordConfirmation)activeRecordConfirmation.close();document.body.classList.toggle("dark",!!(state.settings&&state.settings.dark));document.body.classList.toggle("motionOff",!!(state.settings&&state.settings.reducedMotion));
+function render(){if(activeRecordConfirmation)activeRecordConfirmation.close();document.body.classList.toggle("dark",!!(state.settings&&state.settings.dark));document.body.classList.toggle("motionOff",!!(state.settings&&state.settings.reducedMotion));document.body.classList.toggle("smartLogging",current==="log");
   try{
     renderTabs();
     var views={home:homeView,log:logView,timeline:timelineView,patterns:patternsView,meds:medsView,people:peopleView,reports:reportsView,settings:settingsView};
     document.getElementById("app").innerHTML='<div class="page">'+views[current]()+'</div>';
     var appEl=document.getElementById("app");
-  if(appEl&&currentUser()){appEl.innerHTML=v125PersonBar()+appEl.innerHTML+v125RecordControls();}
+  if(appEl&&currentUser()){appEl.innerHTML=v125PersonBar()+appEl.innerHTML+(current==="log"?"":v125RecordControls());}
   bind();
     if(current==="log"&&draftLevel!==null){var lf=document.getElementById("logForm");if(lf){lf.elements.level.value=String(draftLevel);syncLogChoices(lf);}draftLevel=null;}
   }catch(err){
@@ -1282,14 +1367,18 @@ function render(){if(activeRecordConfirmation)activeRecordConfirmation.close();d
 }
 function applyRecordMode(mode){
   var form=document.getElementById("logForm");if(!form)return;
-  var detailed=mode==="detailed";recordMode=detailed?"detailed":"quick";
+  var detailed=mode==="detailed",wasQuick=form.classList.contains("quickRecordMode");recordMode=detailed?"detailed":"quick";
+  form.querySelectorAll('[data-log-section]').forEach(function(d){
+    if(!detailed&&d.classList.contains('quickEssential')){if(!wasQuick)d.dataset.detailedOpen=String(d.open);d.open=true;}
+    else if(detailed&&wasQuick&&d.dataset.detailedOpen!==undefined)d.open=d.dataset.detailedOpen==='true';
+  });
   form.classList.toggle("quickRecordMode",!detailed);
   Array.prototype.forEach.call(document.querySelectorAll("[data-record-mode]"),function(b){
     b.classList.toggle("on",b.dataset.recordMode===mode);
     b.setAttribute("aria-pressed",String(b.dataset.recordMode===mode));
   });
   var hint=document.getElementById("recordModeHint");
-  if(hint)hint.textContent=detailed?"All recording sections are available.":"Showing essential fields. Detailed fields are hidden, not deleted.";
+  if(hint)hint.textContent=detailed?"Open any section to add detail. Collapsing a section keeps its values.":"Showing essential fields. Detailed fields are hidden, not deleted.";
 }
 var activeRecordConfirmation=null;
 function confirmRecordAction(action,kind,id,trigger){
@@ -1359,6 +1448,13 @@ function bind(){
     });
   }
 
+  var smartForm=document.getElementById('logForm');
+  if(smartForm){
+    smartForm.querySelectorAll('[data-log-section]').forEach(function(d){d.addEventListener('toggle',function(){if(recordMode==='detailed')d.dataset.detailedOpen=String(d.open);rememberDraft();});});
+    smartForm.querySelectorAll('[data-chip-more]').forEach(function(b){b.onclick=function(){var g=smartForm.querySelector('.chips[data-name="'+b.dataset.chipMore+'"]');if(g){g.classList.toggle('expanded');syncSmartLog(smartForm);rememberDraft();}};});
+    smartForm.addEventListener('change',function(){syncSmartLog(smartForm);});
+    smartForm.addEventListener('invalid',function(e){var d=e.target.closest('details');if(d){applyRecordMode('detailed');d.open=true;}},true);
+  }
   Array.prototype.forEach.call(document.querySelectorAll("[data-go]"),function(b){b.onclick=function(){var g=b.dataset.go;if(g==="early")openEarlyWarning();else if(g==="log")startRecord();else{rememberDraft();current=g;render();}};});
   Array.prototype.forEach.call(document.querySelectorAll("[data-range]"),function(b){b.onclick=function(){patternDays=Number(b.dataset.range);render();};});
   Array.prototype.forEach.call(document.querySelectorAll("[data-level]"),function(b){b.onclick=function(){quickSaveLevel(Number(b.dataset.level));};});
@@ -1404,18 +1500,18 @@ function bind(){
 
 
   Array.prototype.forEach.call(document.querySelectorAll("[data-quick]"),function(b){b.onclick=function(){startRecord();draftLevel=Number(b.dataset.quick);render();};});
-  Array.prototype.forEach.call(document.querySelectorAll(".chips .chip"),function(b){b.onclick=function(){b.classList.toggle("on");b.closest(".chips").dataset.answered="true";rememberDraft();};});
+  Array.prototype.forEach.call(document.querySelectorAll(".chips .chip"),function(b){b.onclick=function(){b.classList.toggle("on");b.closest(".chips").dataset.answered="true";b.setAttribute("aria-pressed",String(b.classList.contains("on")));rememberDraft();};});
 
   Array.prototype.forEach.call(document.querySelectorAll("[data-entry-choice]"),function(b){b.onclick=function(){
     var v=document.getElementById("entryTypeValue");if(v)v.value=b.dataset.entryChoice;
-    document.querySelectorAll(".entryChoice").forEach(function(x){x.classList.toggle("on",x===b);});rememberDraft();
+    document.querySelectorAll(".entryChoice").forEach(function(x){x.classList.toggle("on",x===b);x.setAttribute("aria-pressed",String(x===b));});rememberDraft();
   };});
   Array.prototype.forEach.call(document.querySelectorAll("[data-intensity]"),function(b){b.onclick=function(){
     var v=document.getElementById("levelSelect");if(v)v.value=b.dataset.intensity;
-    document.querySelectorAll("[data-intensity]").forEach(function(x){x.classList.toggle("on",x===b);});rememberDraft();
+    document.querySelectorAll("[data-intensity]").forEach(function(x){x.classList.toggle("on",x===b);x.setAttribute("aria-pressed",String(x===b));});rememberDraft();
   };});
   Array.prototype.forEach.call(document.querySelectorAll("[data-clear-chips]"),function(b){b.onclick=function(){
-    document.querySelectorAll('.chips[data-name="'+b.dataset.clearChips+'"] .chip').forEach(function(x){x.classList.remove("on");});var g=document.querySelector('.chips[data-name="'+b.dataset.clearChips+'"]');if(g){g.dataset.answered="true";g.dataset.retained="[]";}rememberDraft();
+    document.querySelectorAll('.chips[data-name="'+b.dataset.clearChips+'"] .chip').forEach(function(x){x.classList.remove("on");x.setAttribute("aria-pressed","false");});var g=document.querySelector('.chips[data-name="'+b.dataset.clearChips+'"]');if(g){g.dataset.answered="true";g.dataset.retained="[]";}rememberDraft();
   };});
   Array.prototype.forEach.call(document.querySelectorAll("[data-step-target]"),function(b){b.onclick=function(){
     var el=document.getElementById(b.dataset.stepTarget);if(!el)return;
@@ -1439,13 +1535,17 @@ function bind(){
     if(f.dataset.saving)return;f.dataset.saving="true";
     try{
       var fd=new FormData(f),d=new Date();
+      var stageValue=fd.get("escalationStage"),observation=fd.get("painObservation"),changed=existing?changedLogFields(f):null;
+      if(stageValue!=null&&stageValue!==""&&["1","2","3","4"].indexOf(String(stageValue))===-1&&(!existing||changed.indexOf("escalationStage")!==-1))throw new Error("Select a valid escalation stage or Not assessed / Unclear.");
+      if(observation&&painObservations.indexOf(observation)===-1&&(!existing||changed.indexOf("painObservation")!==-1))throw new Error("Select a valid pain / discomfort observation.");
       if(!existing&&!f.dataset.pendingId)f.dataset.pendingId=newRecordId();
       rememberDraft();
-      var rec=Object.assign({},existing||{},{id:existing?existing.id:f.dataset.pendingId,person:f.dataset.person,staff:staff()||"Not set",ts:existing?existing.ts:d.toISOString(),updatedTs:existing?d.toISOString():"",date:existing?(existing.date||existing.ts.slice(0,10)):d.toISOString().slice(0,10),type:fd.get("type"),level:nullableNumber(fd.get("level")),behaviours:nullableChips("behaviours"),triggers:nullableChips("triggers"),warningSigns:nullableChips("warningSigns"),escalationRate:nullableSelect(fd.get("escalationRate")),recoveryState:nullableSelect(fd.get("recoveryState")),antecedent:nullableText(fd.get("antecedent")),consequence:nullableText(fd.get("consequence")),pain:nullableNumber(fd.get("pain")),sleep:nullableSelect(fd.get("sleep")),interventions:nullableChips("interventions"),outcome:nullableSelect(fd.get("outcome")),injury:safetyValue(f.elements.injury),damage:safetyValue(f.elements.damage),restrictive:safetyValue(f.elements.restrictive),duration:nullableNumber(fd.get("duration")),recoveryMinutes:nullableNumber(fd.get("recoveryMinutes")),staffReflection:nullableText(fd.get("staffReflection")),notes:nullableText(fd.get("notes")),prnFollowFor:f.dataset.prnFollowFor||"",quick:existing?!!existing.quick:recordMode==="quick"});
+      var rec=Object.assign({},existing||{},{id:existing?existing.id:f.dataset.pendingId,person:f.dataset.person,staff:staff()||"Not set",ts:existing?existing.ts:d.toISOString(),updatedTs:existing?d.toISOString():"",date:existing?(existing.date||existing.ts.slice(0,10)):d.toISOString().slice(0,10),type:fd.get("type"),level:nullableNumber(fd.get("level")),behaviours:nullableChips("behaviours"),triggers:nullableChips("triggers"),warningSigns:nullableChips("warningSigns"),escalationRate:nullableSelect(fd.get("escalationRate")),recoveryState:nullableSelect(fd.get("recoveryState")),antecedent:nullableText(fd.get("antecedent")),consequence:nullableText(fd.get("consequence")),pain:nullableNumber(fd.get("pain")),painObservation:fd.get("painObservation")==="Unable to assess"?null:nullableText(fd.get("painObservation")),painIndicators:nullableChips("painIndicators"),escalationStage:nullableNumber(fd.get("escalationStage")),sleep:nullableSelect(fd.get("sleep")),interventions:nullableChips("interventions"),outcome:nullableSelect(fd.get("outcome")),injury:safetyValue(f.elements.injury),damage:safetyValue(f.elements.damage),restrictive:safetyValue(f.elements.restrictive),duration:nullableNumber(fd.get("duration")),recoveryMinutes:nullableNumber(fd.get("recoveryMinutes")),staffReflection:nullableText(fd.get("staffReflection")),notes:nullableText(fd.get("notes")),prnFollowFor:f.dataset.prnFollowFor||"",quick:existing?!!existing.quick:recordMode==="quick"});
       if(existing){
         if(!f.editBaseline||!f.editRecord)throw new Error("The saved record was not loaded for editing. Reopen it before saving.");
         var changes=changedLogFields(f),updated=Object.assign({},existing,{updatedTs:d.toISOString(),updatedStaff:staff()||"Not set"});
         changes.forEach(function(k){
+          if(k==="pain")return; // Historical scores are read-only; never recategorise or overwrite them.
           if(JSON.stringify(existing[k])!==JSON.stringify(f.editRecord[k]))throw new Error("This record changed after editing began. Reopen it before saving.");
           if(Object.prototype.hasOwnProperty.call(rec,k))updated[k]=rec[k];
         });
@@ -1521,8 +1621,8 @@ function download(name,text,type,action,detail){
 }
 function exportJSON(){download("NeuroPattern-backup.json",JSON.stringify(state,null,2),"application/json","EXPORT_BACKUP","Full JSON backup");}
 function exportCSV(){
-  var rows=[["timestamp","type","level","behaviours","possible_factors","antecedent","consequence","pain","sleep","interventions","outcome","injury","property_damage","restrictive_intervention","duration_minutes","notes"]];
-  mine().forEach(function(x){rows.push([x.ts,x.type,x.level,(x.behaviours||[]).join("; "),(x.triggers||[]).join("; "),x.antecedent,x.consequence,x.pain,x.sleep,(x.interventions||[]).join("; "),x.outcome,x.injury,x.damage,x.restrictive,x.duration,x.notes]);});
+  var rows=[["timestamp","type","level","behaviours","possible_factors","antecedent","consequence","pain","sleep","interventions","outcome","injury","property_damage","restrictive_intervention","duration_minutes","notes","pain_observation","pain_indicators","escalation_stage","escalation_speed","warning_signs","recovery_state","recovery_minutes","staff_reflection"]];
+  mine().forEach(function(x){rows.push([x.ts,x.type,x.level,(x.behaviours||[]).join("; "),(x.triggers||[]).join("; "),x.antecedent,x.consequence,x.pain,x.sleep,(x.interventions||[]).join("; "),x.outcome,x.injury,x.damage,x.restrictive,x.duration,x.notes,x.painObservation,(x.painIndicators||[]).join("; "),x.escalationStage,x.escalationRate,(x.warningSigns||[]).join("; "),x.recoveryState,x.recoveryMinutes,x.staffReflection]);});
   var csv=rows.map(function(r){return r.map(function(v){return '"'+String(v==null?"":v).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
   download("NeuroPattern-behaviour.csv",csv,"text/csv","EXPORT_CSV","Behaviour CSV");
 }
