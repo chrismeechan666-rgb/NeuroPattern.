@@ -532,6 +532,28 @@ body.dark .np-offline{background:#3c3216;color:#ffe9a2;border-color:#66551e}
 }
 </style>
 
+<style id="record-confirmation-style">
+.recordConfirmOverlay{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:24px 18px;background:rgba(12,35,36,.58);overscroll-behavior:contain}
+.recordConfirmPanel{width:100%;max-width:420px;max-height:85vh;overflow:auto;background:var(--surface,#fff);color:var(--ink);border:1px solid var(--line);border-radius:24px;padding:24px;box-shadow:0 20px 60px #0004}
+.recordConfirmIcon{display:flex;align-items:center;justify-content:center;width:48px;height:48px;margin-bottom:16px;border-radius:15px;background:var(--teal2);color:var(--teal);font-size:27px;font-weight:900}
+.recordConfirmIcon.danger{background:#fae8e8;color:#a33333}
+.recordConfirmPanel h2{margin:0 0 10px;font-size:21px;line-height:1.25}
+.recordConfirmPanel p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
+.recordConfirmButtons{display:flex;gap:10px;margin-top:24px}
+.recordConfirmButtons button{flex:1;min-height:48px;padding:12px 16px;border-radius:13px;font-size:14px;font-weight:800;cursor:pointer}
+.recordConfirmCancel{background:var(--surface,#fff);color:var(--ink);border:1px solid var(--line)}
+.recordConfirmProceed{background:var(--teal);color:white;border:1px solid var(--teal)}
+.recordConfirmProceed.danger{background:#a33333;border-color:#a33333}
+.recordConfirmButtons button:focus-visible{outline:3px solid var(--teal);outline-offset:3px}
+.recordConfirmButtons button:disabled{opacity:.6;cursor:wait}
+body.dark .recordConfirmPanel{background:#172020;border-color:#3a5251;box-shadow:0 20px 60px #0008}
+body.dark .recordConfirmCancel{background:#213030;color:#f2f6f6;border-color:#46615f}
+body.dark .recordConfirmIcon{background:#193a36;color:#8dd9c7}
+body.dark .recordConfirmIcon.danger{background:#482728;color:#ffb5b5}
+body.dark .recordConfirmProceed.danger{background:#b83c3c;border-color:#b83c3c}
+body.dark .recordConfirmButtons button:focus-visible{outline-color:#8dd9c7}
+@media(max-width:360px){.recordConfirmPanel{padding:20px}.recordConfirmButtons{gap:8px}}
+</style>
 </head>
 <body>
 <div id="v11Splash" class="v11Splash"><div><div class="neuroAnim"><div class="node n1"></div><div class="node n2"></div><div class="node n3"></div><div class="node n4"></div><div class="node n5"></div><div class="node n6"></div><div class="neuroCore">N</div></div><div class="splashWords"><b>NeuroPattern</b><span>connecting the record</span></div></div></div>
@@ -1022,6 +1044,7 @@ function requestPinForUser(u,onSuccess){
 }
 
 function showLogin(mode){
+  if(activeRecordConfirmation)activeRecordConfirmation.close();
   var old=document.getElementById("loginOverlay");if(old)old.remove();
   var old2=document.getElementById("switchSheet");if(old2)old2.remove();
   if(!state.users.length){showFirstAdmin();return;}
@@ -1241,7 +1264,7 @@ function v125RecordControls(){
 function moreView(){
  return v8Header()+'<div class="screenIntro"><h1>More</h1><p>Profiles, medication, reports, backup and app settings.</p></div><div class="moreGrid"><button class="moreTile" data-more-go="meds">💊<b>Medication</b><span>Schedules and administrations</span></button><button class="moreTile" data-more-go="people">👤<b>People & support</b><span>Profiles and support information</span></button><button class="moreTile" data-more-go="reports">📋<b>Reports</b><span>Handover and summaries</span></button><button class="moreTile" data-more-action="backup">💾<b>Backup</b><span>Export NeuroPattern data</span></button></div><div class="safetyNote"><b>NeuroPattern V13.0.1</b> — usability refinement. Recorded patterns are associations and do not establish causation or replace professional judgement.</div>';
 }
-function render(){document.body.classList.toggle("dark",!!(state.settings&&state.settings.dark));document.body.classList.toggle("motionOff",!!(state.settings&&state.settings.reducedMotion));
+function render(){if(activeRecordConfirmation)activeRecordConfirmation.close();document.body.classList.toggle("dark",!!(state.settings&&state.settings.dark));document.body.classList.toggle("motionOff",!!(state.settings&&state.settings.reducedMotion));
   try{
     renderTabs();
     var views={home:homeView,log:logView,timeline:timelineView,patterns:patternsView,meds:medsView,people:peopleView,reports:reportsView,settings:settingsView};
@@ -1267,6 +1290,64 @@ function applyRecordMode(mode){
   });
   var hint=document.getElementById("recordModeHint");
   if(hint)hint.textContent=detailed?"All recording sections are available.":"Showing essential fields. Detailed fields are hidden, not deleted.";
+}
+var activeRecordConfirmation=null;
+function confirmRecordAction(action,kind,id,trigger){
+  if(activeRecordConfirmation){activeRecordConfirmation.focus();return;}
+  var deleting=action==="delete",record=(state[kind]||[]).find(function(x){return x.id===id;});
+  if(!record)return;
+  var person=record.person,closed=false,busy=false,previousFocus=trigger||document.activeElement;
+  var overlay=document.createElement("div");overlay.className="recordConfirmOverlay";
+  var panel=document.createElement("section");panel.className="recordConfirmPanel";
+  panel.setAttribute("role",deleting?"alertdialog":"dialog");panel.setAttribute("aria-modal","true");
+  panel.setAttribute("aria-labelledby","recordConfirmTitle");panel.setAttribute("aria-describedby","recordConfirmDescription");
+  var icon=document.createElement("div");icon.className="recordConfirmIcon"+(deleting?" danger":"");icon.setAttribute("aria-hidden","true");icon.textContent=deleting?"!":"＋";
+  var title=document.createElement("h2");title.id="recordConfirmTitle";title.textContent=deleting?"Delete this entry?":"Duplicate this record?";
+  var description=document.createElement("p");description.id="recordConfirmDescription";
+  description.textContent=deleting?"This entry will be deleted from your saved records. You can undo the deletion immediately afterwards.":"A copy of this record will be created with the current date and time. The original record will stay unchanged.";
+  var buttons=document.createElement("div");buttons.className="recordConfirmButtons";
+  var cancel=document.createElement("button");cancel.type="button";cancel.className="recordConfirmCancel";cancel.textContent="Cancel";
+  var proceed=document.createElement("button");proceed.type="button";proceed.className="recordConfirmProceed"+(deleting?" danger":"");proceed.textContent=deleting?"Delete":"Duplicate";
+  buttons.appendChild(cancel);buttons.appendChild(proceed);
+  [icon,title,description,buttons].forEach(function(el){panel.appendChild(el);});overlay.appendChild(panel);
+  // Isolate the background for assistive technology and supporting WebViews.
+  var background=Array.prototype.map.call(document.body.children,function(el){
+    return {el:el,hidden:el.getAttribute("aria-hidden"),inert:el.hasAttribute("inert")};
+  });
+  var previousOverflow=document.body.style.overflow;document.body.style.overflow="hidden";
+  document.body.appendChild(overlay);
+  function close(){
+    if(closed)return;closed=true;overlay.remove();
+    background.forEach(function(a){if(a.hidden===null)a.el.removeAttribute("aria-hidden");else a.el.setAttribute("aria-hidden",a.hidden);if(!a.inert)a.el.removeAttribute("inert");});
+    document.body.style.overflow=previousOverflow;
+    document.removeEventListener("keydown",onKey,true);document.removeEventListener("focusin",onFocus,true);
+    activeRecordConfirmation=null;
+    if(previousFocus&&previousFocus.isConnected)previousFocus.focus();
+    else{var fallback=document.querySelector(".tabs button.on");if(fallback)fallback.focus();}
+  }
+  function onKey(e){
+    if(e.key==="Escape"){e.preventDefault();e.stopPropagation();if(!busy)close();}
+    else if(e.key==="Tab"){
+      e.preventDefault();
+      if(!busy)(document.activeElement===cancel?proceed:cancel).focus();
+    }
+  }
+  function onFocus(e){if(!closed&&!panel.contains(e.target))cancel.focus();}
+  cancel.onclick=function(){if(!busy)close();};
+  overlay.onclick=function(e){if(e.target===overlay&&!busy)close();};
+  proceed.onclick=function(){
+    if(closed||busy)return;busy=true;cancel.disabled=true;proceed.disabled=true;
+    try{
+      var currentRecord=(state[kind]||[]).find(function(x){return x.id===id;});
+      if(!currentRecord||currentRecord.person!==person)throw new Error("This entry changed. Reopen it before trying again.");
+      if(deleting)removeRecord(kind,id);else duplicateLog(id);
+    }catch(e){console.error("Record action failed",e);if(!e.neuropatternSaveReported)alert("Unable to "+(deleting?"delete the entry":"duplicate the record")+": "+(e.message||String(e)));}
+    finally{close();}
+  };
+  activeRecordConfirmation={focus:function(){cancel.focus();},close:close};
+  document.addEventListener("keydown",onKey,true);document.addEventListener("focusin",onFocus,true);
+  cancel.focus();
+  background.forEach(function(a){a.el.setAttribute("aria-hidden","true");a.el.setAttribute("inert","");});
 }
 function bind(){
   if(document.getElementById("logForm")){
@@ -1309,9 +1390,9 @@ function bind(){
   Array.prototype.forEach.call(document.querySelectorAll("[data-toggle-user]"),function(b){b.onclick=function(){var u=state.users.find(function(x){return x.id===b.dataset.toggleUser;});if(!u)return;u.active=u.active===false?true:false;audit("USER_STATUS",u.name+" • "+(u.active?"enabled":"disabled"));save();render();};});
   var mt=document.getElementById("motionToggle");if(mt)mt.onclick=function(){state.settings.reducedMotion=!state.settings.reducedMotion;save();document.body.classList.toggle("motionOff",state.settings.reducedMotion);render();};
 
-  Array.prototype.forEach.call(document.querySelectorAll("[data-delete-kind]"),function(b){b.onclick=function(){if(confirm("Delete this entry?"))removeRecord(b.dataset.deleteKind,b.dataset.deleteId);};});
+  Array.prototype.forEach.call(document.querySelectorAll("[data-delete-kind]"),function(b){b.onclick=function(){if(b.isConnected)confirmRecordAction("delete",b.dataset.deleteKind,b.dataset.deleteId,b);};});
 
-  Array.prototype.forEach.call(document.querySelectorAll("[data-duplicate-log]"),function(b){b.onclick=function(){if(confirm("Duplicate this record with the current time?"))duplicateLog(b.dataset.duplicateLog);};});
+  Array.prototype.forEach.call(document.querySelectorAll("[data-duplicate-log]"),function(b){b.onclick=function(){if(b.isConnected)confirmRecordAction("duplicate","logs",b.dataset.duplicateLog,b);};});
   Array.prototype.forEach.call(document.querySelectorAll("[data-edit-log]"),function(b){b.onclick=function(){
     var rec=state.logs.find(function(x){return x.id===b.dataset.editLog;});
     if(!rec)return;
